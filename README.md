@@ -1,3 +1,3 @@
 # Kubera
 
-![Kubera](kubera.png)
+![Kubera](logo.png)
