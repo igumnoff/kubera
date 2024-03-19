@@ -4,8 +4,8 @@ version = "0.0.1"
 edition = "2021"
 
 authors = ["Evgeny Igumnov <igumnovnsk@gmail.com>"]
-repository = "https://github.com/igumnoff/metatron"
-documentation = "https://docs.rs/metatron"
+repository = "https://github.com/igumnoff/kubera"
+documentation = "https://docs.rs/kubera"
 license-file = "LICENSE"
 keywords = []
 categories = []
