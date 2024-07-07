@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime};
 use bincode::{Decode, Encode};
+use tracing::{Level, span};
 use crate::assets::AssetSystem;
 use crate::storage::StorageSystem;
 
@@ -120,9 +121,13 @@ impl AccountSystem {
     pub fn create_account(&mut self, mut account: Account) -> u64 {
         self.account_last_id += 1;
         account.id = self.account_last_id;
+
+        let add_account = span!(Level::TRACE, "add_account");
+        let _ = add_account.enter();
+        self.storage_system.add_account(&account);
+        drop(add_account);
         self.accounts.push(account);
         self.accounts_hash_map.insert(self.account_last_id, self.accounts.len() as u64 - 1);
-        self.storage_system.save_accounts(&self.accounts);
 
         // self.asset_system.currencies.iter().for_each(|(currency_id, _)| {
         //     self.create_account_currency(self.account_last_id, *currency_id);

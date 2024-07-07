@@ -6,6 +6,7 @@ use std::any::type_name;
 use redb::{Database, Key, Range, ReadableTable, TableDefinition, TypeName, Value};
 use std::cmp::Ordering;
 use std::fmt::Debug;
+use std::thread;
 
 pub struct StorageSystem {
     pub accounts_db: Database,
@@ -111,6 +112,17 @@ impl StorageSystem {
             for account in accounts {
                 table.insert(&account.id, account).unwrap();
             }
+        }
+        write_txn.commit().unwrap();
+    }
+
+    // #[tracing::instrument(level = "info", skip(self))]
+    pub fn add_account(&self, account: &Account) {
+        thread::sleep(std::time::Duration::from_secs(1));
+        let write_txn = self.accounts_db.begin_write().unwrap();
+        {
+            let mut table = write_txn.open_table(ACCOUNTS_TABLE).unwrap();
+            table.insert(&account.id, account).unwrap();
         }
         write_txn.commit().unwrap();
     }
