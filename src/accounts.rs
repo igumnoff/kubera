@@ -128,11 +128,6 @@ impl AccountSystem {
         drop(add_account);
         self.accounts.push(account);
         self.accounts_hash_map.insert(self.account_last_id, self.accounts.len() as u64 - 1);
-
-        // self.asset_system.currencies.iter().for_each(|(currency_id, _)| {
-        //     self.create_account_currency(self.account_last_id, *currency_id);
-        // });
-
         let currencies: Vec<u64> = self.asset_system.currencies.iter()
             .map(|(currency_id, _)| *currency_id)
             .collect();
