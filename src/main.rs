@@ -29,8 +29,6 @@ fn main() {
     accounts_system.add_currency_to_account(account1_id, currency_id, 1000.0);
     accounts_system.add_stock_to_account(account2_id, stock_id, 50);
 
-    print_accounts(&accounts_system, &assets_system);
-
     let mut order_system = OrderSystem::new(storage_system.clone(), assets_system.clone());
 
     let matcher_system = MatcherSystem::start(stock_id, currency_id);
@@ -39,11 +37,11 @@ fn main() {
         let _ = matcher_system.add_order(order1);
         let _ = matcher_system.add_order(order2);
         loop {
+            print_accounts(&accounts_system, &assets_system);
+            println!("--------------");
             while let Some(order_match) = matcher_system.get_order_match() {
                 order_system.create_order_history(&order_match, &mut accounts_system);
             }
-            println!("--------------");
-            print_accounts(&accounts_system, &assets_system);
             std::thread::sleep(std::time::Duration::from_secs(1));
         }
 
