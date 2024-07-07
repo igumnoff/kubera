@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime};
+use core_affinity::CoreId;
 use crossbeam_queue::ArrayQueue;
 use crate::orders::{Order, PriceType};
 
@@ -108,27 +109,32 @@ pub struct MatcherSystem {
 }
 
 impl MatcherSystem {
-    pub fn start(stock_id: u64, currency_id: u64) -> MatcherSystem {
+    pub fn start(stock_id: u64, currency_id: u64, core_id: CoreId) -> MatcherSystem {
         let order_queue:Arc<ArrayQueue<Order>> = Arc::new(ArrayQueue::new(100));
         let order_match_queue:Arc<ArrayQueue<OrderMatch>> = Arc::new(ArrayQueue::new(100));
         let order_queue_clone = order_queue.clone();
         let order_match_queue_clone = order_match_queue.clone();
         let _match_system_thread_handle = std::thread::spawn(move || {
-            let mut matcher_system = OrderMatcher::new(stock_id, currency_id);
-            loop {
-                while let Some(order) = order_queue_clone.pop() {
-                    matcher_system.add_order(order);
-                };
-                let order_matches = matcher_system.match_orders();
+            let ok = core_affinity::set_for_current(core_id);
+            if ok {
+                let mut matcher_system = OrderMatcher::new(stock_id, currency_id);
+                loop {
+                    while let Some(order) = order_queue_clone.pop() {
+                        matcher_system.add_order(order);
+                    };
+                    let order_matches = matcher_system.match_orders();
 
-                for order_match in &order_matches {
-                    println!("Buy Order Id: {} Sell Order Id: {} Quantity: {} Price: {}", order_match.buy_order_id, order_match.sell_order_id, order_match.quantity, order_match.price);
-                }
+                    for order_match in &order_matches {
+                        println!("Buy Order Id: {} Sell Order Id: {} Quantity: {} Price: {}", order_match.buy_order_id, order_match.sell_order_id, order_match.quantity, order_match.price);
+                    }
 
-                for order_match in order_matches {
-                    let _ = order_match_queue_clone.push(order_match);
+                    for order_match in order_matches {
+                        let _ = order_match_queue_clone.push(order_match);
+                    }
+                    std::thread::sleep(std::time::Duration::from_secs(1));
                 }
-                std::thread::sleep(std::time::Duration::from_secs(1));
+            } else {
+                panic!("Failed to set core affinity");
             }
         });
 
