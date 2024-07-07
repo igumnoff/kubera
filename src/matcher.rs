@@ -1,9 +1,11 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::{SystemTime};
+use crossbeam_queue::ArrayQueue;
 use crate::orders::{Order, PriceType};
 
 
-pub struct MatcherSystem {
+pub struct OrderMatcher {
     pub stock_id: u64,
     pub currency_id: u64,
     pub orders: Vec<Order>,
@@ -19,9 +21,9 @@ pub struct OrderMatch {
     pub timestamp: SystemTime,
 }
 
-impl MatcherSystem {
-    pub fn new(stock_id: u64, currency_id: u64) -> MatcherSystem {
-        MatcherSystem {
+impl OrderMatcher {
+    pub fn new(stock_id: u64, currency_id: u64) -> OrderMatcher {
+        OrderMatcher {
                 stock_id,
                 currency_id,
                 orders: vec![],
@@ -100,3 +102,50 @@ impl MatcherSystem {
     }
 }
 
+pub struct MatcherSystem {
+    order_queue:Arc<ArrayQueue<Order>>,
+    order_match_queue:Arc<ArrayQueue<OrderMatch>>,
+}
+
+impl MatcherSystem {
+    pub fn start(stock_id: u64, currency_id: u64) -> MatcherSystem {
+        let order_queue:Arc<ArrayQueue<Order>> = Arc::new(ArrayQueue::new(100));
+        let order_match_queue:Arc<ArrayQueue<OrderMatch>> = Arc::new(ArrayQueue::new(100));
+        let order_queue_clone = order_queue.clone();
+        let order_match_queue_clone = order_match_queue.clone();
+        let _match_system_thread_handle = std::thread::spawn(move || {
+            let mut matcher_system = OrderMatcher::new(stock_id, currency_id);
+            loop {
+                while let Some(order) = order_queue_clone.pop() {
+                    matcher_system.add_order(order);
+                };
+                let order_matches = matcher_system.match_orders();
+
+                for order_match in &order_matches {
+                    println!("Buy Order Id: {} Sell Order Id: {} Quantity: {} Price: {}", order_match.buy_order_id, order_match.sell_order_id, order_match.quantity, order_match.price);
+                }
+
+                for order_match in order_matches {
+                    let _ = order_match_queue_clone.push(order_match);
+                }
+                std::thread::sleep(std::time::Duration::from_secs(1));
+            }
+        });
+
+
+        MatcherSystem {
+            order_queue,
+            order_match_queue,
+        }
+    }
+
+    pub fn add_order(&self, order: Order) {
+        let _ = self.order_queue.push(order);
+    }
+
+    pub fn get_order_match(&self) -> Option<OrderMatch> {
+        self.order_match_queue.pop()
+    }
+
+
+}
