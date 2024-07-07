@@ -38,7 +38,7 @@ impl MatcherSystem {
         self.orders.push(order);
     }
 
-    pub fn match_orders(&mut self, accounts_system: &mut AccountSystem) -> Vec<OrderMatch> {
+    pub fn match_orders(&mut self, _accounts_system: &mut AccountSystem) -> Vec<OrderMatch> {
         let mut order_for_deletion:Vec<u64> = vec![];
         let mut order_for_decrease:Vec<(u64,u64)> = vec![]; // order_id, quantity
         let mut order_matches = vec![];

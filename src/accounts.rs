@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::{SystemTime};
 use bincode::{Decode, Encode};
 use crate::assets::AssetSystem;
@@ -45,7 +46,7 @@ pub struct AccountStockHistory {
 }
 
 
-pub struct AccountSystem<'a> {
+pub struct AccountSystem {
     pub accounts_hash_map: HashMap<u64,u64>, // account.id -> index in accounts
     pub accounts: Vec<Account>,
     pub account_currencies: HashMap<u64,Vec<AccountCurrency>>,
@@ -57,13 +58,13 @@ pub struct AccountSystem<'a> {
     pub account_currency_histories_last_id: u64,
     pub account_stocks_last_id: u64,
     pub account_stock_histories_last_id: u64,
-    pub storage_system: &'a StorageSystem,
-    pub asset_system: &'a AssetSystem,
+    pub storage_system: Arc<StorageSystem>,
+    pub asset_system: Arc<AssetSystem>,
 }
 
 
-impl<'a> AccountSystem<'_> {
-    pub fn new(storage_system: &'a StorageSystem, asset_system: &'a AssetSystem) -> AccountSystem<'a> {
+impl AccountSystem {
+    pub fn new(storage_system: Arc<StorageSystem>, asset_system: Arc<AssetSystem>) -> AccountSystem {
         let mut account_last_id = 0;
         let mut account_currencies_last_id = 0;
         let account_currency_histories_last_id = 0;
@@ -123,9 +124,18 @@ impl<'a> AccountSystem<'_> {
         self.accounts_hash_map.insert(self.account_last_id, self.accounts.len() as u64 - 1);
         self.storage_system.save_accounts(&self.accounts);
 
-        self.asset_system.currencies.iter().for_each(|(currency_id, _)| {
-            self.create_account_currency(self.account_last_id, *currency_id);
-        });
+        // self.asset_system.currencies.iter().for_each(|(currency_id, _)| {
+        //     self.create_account_currency(self.account_last_id, *currency_id);
+        // });
+
+        let currencies: Vec<u64> = self.asset_system.currencies.iter()
+            .map(|(currency_id, _)| *currency_id)
+            .collect();
+
+        for currency_id in currencies {
+            self.create_account_currency(self.account_last_id, currency_id);
+        }
+
 
         self.account_last_id
     }

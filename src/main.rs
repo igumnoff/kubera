@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::time::{SystemTime};
 use chrono::{DateTime, Local};
 use kubera::accounts::{Account, AccountSystem};
@@ -7,9 +8,9 @@ use kubera::matcher::MatcherSystem;
 use kubera::storage::StorageSystem;
 
 fn main() {
-    let storage_system = StorageSystem::new();
-    let assets_system = AssetSystem::new(&storage_system);
-    let mut accounts_system = AccountSystem::new(&storage_system, &assets_system);
+    let storage_system = Arc::new(StorageSystem::new());
+    let assets_system =  Arc::new(AssetSystem::new(&storage_system));
+    let mut accounts_system = AccountSystem::new(storage_system.clone(), assets_system.clone());
 
     if accounts_system.accounts_hash_map.len() == 0 {
         accounts_system.create_account(Account { id: 0, name: "Alice".to_string(), timestamp: SystemTime::now()});
@@ -28,25 +29,34 @@ fn main() {
 
     print_accounts(&accounts_system, &assets_system);
 
-    let mut order_system = OrderSystem::new(&storage_system, &assets_system);
+    let mut order_system = OrderSystem::new(storage_system.clone(), assets_system.clone());
     let order1 = order_system.create_order(Order { id: 0, account_id: account1_id, trade_type: TradeType::Buy, price_type: PriceType::Market, execution_type: ExecutionType::Full, stock_id, currency_id, quantity: 10,  status: OrderStatus::Open, timestamp: SystemTime::now()});
     let order2 = order_system.create_order(Order { id: 0, account_id: account2_id, trade_type: TradeType::Sell, price_type: PriceType::Limit(100.00), execution_type: ExecutionType::Partial, stock_id, currency_id, quantity: 50,  status: OrderStatus::Open, timestamp: SystemTime::now()});
     let mut matcher_system = MatcherSystem::new(stock_id, currency_id);
     matcher_system.add_order(order1);
     matcher_system.add_order(order2);
-    let order_matches = matcher_system.match_orders(&mut accounts_system);
 
-    for order_match in &order_matches {
-        println!("Buy Order Id: {} Sell Order Id: {} Quantity: {} Price: {}", order_match.buy_order_id, order_match.sell_order_id, order_match.quantity, order_match.price);
-    }
+    let thread_handle = std::thread::spawn(move || {
+        loop {
 
-    for order_match in &order_matches {
-        order_system.create_order_history(order_match, &mut accounts_system);
-    }
+            let order_matches = matcher_system.match_orders(&mut accounts_system);
 
+            for order_match in &order_matches {
+                println!("Buy Order Id: {} Sell Order Id: {} Quantity: {} Price: {}", order_match.buy_order_id, order_match.sell_order_id, order_match.quantity, order_match.price);
+            }
 
-    println!("After matching orders");
-    print_accounts(&accounts_system, &assets_system);
+            for order_match in &order_matches {
+                order_system.create_order_history(order_match, &mut accounts_system);
+            }
+            std::thread::sleep(std::time::Duration::from_secs(1));
+
+            println!("After matching orders");
+            print_accounts(&accounts_system, &assets_system);
+
+        }
+
+    });
+    thread_handle.join().unwrap();
 }
 
 fn print_accounts(accounts_system: &AccountSystem, assets_system: &AssetSystem) {

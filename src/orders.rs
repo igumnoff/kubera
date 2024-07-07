@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::SystemTime;
 use crate::accounts::AccountSystem;
 use crate::assets::AssetSystem;
@@ -53,18 +54,18 @@ pub enum ExecutionType {
     Partial,
 }
 
-pub struct OrderSystem<'a> {
+pub struct OrderSystem {
     pub orders: HashMap<u64,Vec<Order>>, // account_id -> orders
     pub orders_hash_map: HashMap<u64,(u64,u64)>, // order.id -> (account_id, index in orders)
     pub order_histories: HashMap<u64,Vec<OrderHistory>>, // account_id -> order_histories
     pub order_last_id: u64,
     pub order_history_id: u64,
-    pub storage_system: &'a StorageSystem,
-    pub assets_system: &'a AssetSystem,
+    pub storage_system: Arc<StorageSystem>,
+    pub assets_system: Arc<AssetSystem>,
 }
 
-impl<'a> OrderSystem<'a> {
-    pub fn new(storage_system: &'a StorageSystem, assets_system: &'a AssetSystem) -> OrderSystem<'a> {
+impl OrderSystem {
+    pub fn new(storage_system: Arc<StorageSystem>, assets_system: Arc<AssetSystem>) -> OrderSystem {
         OrderSystem {
             orders: HashMap::new(),
             orders_hash_map: HashMap::new(),
