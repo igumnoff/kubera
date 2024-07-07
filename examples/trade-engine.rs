@@ -32,13 +32,13 @@ fn main() {
     let stock_id = *assets_system.stocks.keys().next().unwrap();
 
 
-    if accounts_system.accounts_hash_map.len() == 0 {
+    if accounts_system.get_accounts().len() == 0 {
         let _account1_id = accounts_system.create_account(Account { id: 0, name: "Alice".to_string(), timestamp: SystemTime::now() });
         let _account2_id = accounts_system.create_account(Account { id: 0, name: "Bob".to_string(), timestamp: SystemTime::now() });
     }
-
-    let account1_id = accounts_system.accounts[0].id;
-    let account2_id = accounts_system.accounts[1].id;
+    let accounts = accounts_system.get_accounts();
+    let account1_id = accounts[0].id;
+    let account2_id = accounts[1].id;
     accounts_system.add_currency_to_account(account1_id, currency_id, 1000.0);
     accounts_system.add_stock_to_account(account2_id, stock_id, 50);
 
@@ -64,7 +64,7 @@ fn main() {
 }
 
 fn print_accounts(accounts_system: &AccountSystem, assets_system: &AssetSystem) {
-    for account in &accounts_system.accounts {
+    for account in accounts_system.get_accounts() {
 
         let datetime: DateTime<Local> = account.timestamp.into();
         tracing::info! {

@@ -6,8 +6,6 @@ use std::any::type_name;
 use redb::{Database, Key, Range, ReadableTable, TableDefinition, TypeName, Value};
 use std::cmp::Ordering;
 use std::fmt::Debug;
-use std::thread;
-use tracing::{Level, span};
 
 pub struct StorageSystem {
     pub accounts_db: Database,
