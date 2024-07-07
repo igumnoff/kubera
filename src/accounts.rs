@@ -48,8 +48,6 @@ pub struct AccountStockHistory {
 
 
 pub struct AccountSystem {
-    // pub accounts_hash_map: HashMap<u64,u64>, // account.id -> index in accounts
-    // pub accounts: Vec<Account>,
     pub account_currencies: HashMap<u64,Vec<AccountCurrency>>,
     pub account_currency_histories: HashMap<u64,Vec<AccountCurrencyHistory>>,
     pub account_stocks: HashMap<u64,Vec<AccountStock>>,
@@ -72,13 +70,21 @@ impl AccountSystem {
         let account_stocks_last_id = 0;
         let account_stock_histories_last_id = 0;
 
+        match storage_system.get_last_account() {
+            None => {}
+            Some(acc) => {
+                account_last_id = acc.id;
+            }
+        }
+
+
         let mut accounts_hash_map = HashMap::new();
         let accounts = storage_system.load_accounts();
         let mut i = 0;
         for account in &accounts {
-            if account.id > account_last_id {
-                account_last_id = account.id;
-            }
+            // if account.id > account_last_id {
+            //     account_last_id = account.id;
+            // }
             accounts_hash_map.insert(account.id, i);
             i += 1;
         }
@@ -100,8 +106,6 @@ impl AccountSystem {
         let account_stock_histories = HashMap::new();
 
         AccountSystem {
-            // accounts_hash_map,
-            // accounts,
             account_currencies,
             account_currency_histories,
             account_stocks,
@@ -126,8 +130,6 @@ impl AccountSystem {
         let _ = add_account.enter();
         self.storage_system.add_account(&account);
         drop(add_account);
-        // self.accounts.push(account);
-        // self.accounts_hash_map.insert(self.account_last_id, self.accounts.len() as u64 - 1);
         let currencies: Vec<u64> = self.asset_system.currencies.iter()
             .map(|(currency_id, _)| *currency_id)
             .collect();

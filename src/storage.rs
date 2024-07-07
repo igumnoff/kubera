@@ -104,6 +104,29 @@ impl StorageSystem {
 
     }
 
+    pub fn get_last_account(&self) -> Option<Account> {
+
+        let read_txn = self.accounts_db.begin_read().unwrap();
+        let table_opt = read_txn.open_table(ACCOUNTS_TABLE);
+        match table_opt {
+            Ok(table) => {
+                let last_opt = table.last().unwrap();
+                match last_opt {
+                    None => {
+                        None
+                    },
+                    Some(i) => {
+                        Some(i.1.value())
+                    }
+                }
+            }
+            Err(_) => {
+                None
+            }
+        }
+
+    }
+
     pub fn save_accounts(&self, accounts: &Vec<Account>) {
         let write_txn = self.accounts_db.begin_write().unwrap();
         {
