@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::time::{SystemTime};
-use crate::accounts::AccountSystem;
 use crate::orders::{Order, PriceType};
 
 
@@ -38,7 +37,7 @@ impl MatcherSystem {
         self.orders.push(order);
     }
 
-    pub fn match_orders(&mut self, _accounts_system: &mut AccountSystem) -> Vec<OrderMatch> {
+    pub fn match_orders(&mut self) -> Vec<OrderMatch> {
         let mut order_for_deletion:Vec<u64> = vec![];
         let mut order_for_decrease:Vec<(u64,u64)> = vec![]; // order_id, quantity
         let mut order_matches = vec![];
@@ -65,10 +64,6 @@ impl MatcherSystem {
                                         };
                                         order_matches.push(order_match);
                                         // TODO: check if the account has enough currency and stock
-                                        // accounts_system.add_currency_to_account(order.account_id, order.currency_id, -(quantity as f64 * price));
-                                        // accounts_system.add_stock_to_account(order.account_id, order.stock_id, quantity as i64);
-                                        // accounts_system.add_currency_to_account(order2.account_id, order2.currency_id, quantity as f64 * price);
-                                        // accounts_system.add_stock_to_account(order2.account_id, order2.stock_id, -(quantity as i64));
                                         if order.quantity == quantity {
                                             order_for_deletion.push(order.id);
                                         } else {

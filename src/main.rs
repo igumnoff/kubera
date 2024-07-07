@@ -39,7 +39,7 @@ fn main() {
     let thread_handle = std::thread::spawn(move || {
         loop {
 
-            let order_matches = matcher_system.match_orders(&mut accounts_system);
+            let order_matches = matcher_system.match_orders();
 
             for order_match in &order_matches {
                 println!("Buy Order Id: {} Sell Order Id: {} Quantity: {} Price: {}", order_match.buy_order_id, order_match.sell_order_id, order_match.quantity, order_match.price);
