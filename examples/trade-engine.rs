@@ -16,6 +16,7 @@ fn main() {
         .with_thread_ids(true)
         .with_target(false)
         .with_span_events(FmtSpan::CLOSE)
+        .with_max_level(tracing::Level::TRACE)
         .finish();
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
@@ -53,7 +54,7 @@ fn main() {
     let _ = matcher_system.add_order(order2);
     loop {
         print_accounts(&accounts_system, &assets_system);
-        println!("--------------");
+        tracing::info!("--------------");
         while let Some(order_match) = matcher_system.get_order_match() {
             order_system.create_order_history(&order_match, &mut accounts_system);
         }
@@ -65,18 +66,20 @@ fn main() {
 fn print_accounts(accounts_system: &AccountSystem, assets_system: &AssetSystem) {
     for account in &accounts_system.accounts {
 
+        let datetime: DateTime<Local> = account.timestamp.into();
         tracing::info! {
-            "test"
+            "Id: {} Account: {} Timestamp: {}",account.id,  account.name, datetime.format("%Y-%m-%d %H:%M:%S").to_string()
         };
 
-        print!("Id: {} Account: {} ",account.id,  account.name);
-        let datetime: DateTime<Local> = account.timestamp.into();
-        println!("Timestamp: {}", datetime.format("%Y-%m-%d %H:%M:%S").to_string());
         for account_currency in accounts_system.account_currencies.get(&account.id).unwrap() {
-            println!("Id: {} Currency: {} Amount: {:.2}", account_currency.id, assets_system.currencies.get(&account_currency.currency_id).unwrap().symbol, account_currency.balance);
+            tracing::info! {
+                "Id: {} Currency: {} Amount: {:.2}", account_currency.id, assets_system.currencies.get(&account_currency.currency_id).unwrap().symbol, account_currency.balance
+            };
         }
         for account_stock in accounts_system.account_stocks.get(&account.id).or(Some(&vec![])).unwrap() {
-            println!("Id: {} Stock: {} Amount: {}", account_stock.id, assets_system.stocks.get(&account_stock.stock_id).unwrap().symbol, account_stock.quantity);
+            tracing::info! {
+                "Id: {} Stock: {} Amount: {}", account_stock.id, assets_system.stocks.get(&account_stock.stock_id).unwrap().symbol, account_stock.quantity
+            };
         }
     }
 

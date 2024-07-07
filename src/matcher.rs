@@ -3,6 +3,7 @@ use std::sync::Arc;
 use std::time::{SystemTime};
 use core_affinity::CoreId;
 use crossbeam_queue::ArrayQueue;
+use tracing::{Level, span};
 use crate::orders::{Order, PriceType};
 
 
@@ -41,7 +42,7 @@ impl OrderMatcher {
         self.orders.push(order);
     }
 
-    #[tracing::instrument(level = "info")]
+    // #[tracing::instrument(level = "info")]
     pub fn match_orders(&mut self) -> Vec<OrderMatch> {
         let mut order_for_deletion:Vec<u64> = vec![];
         let mut order_for_decrease:Vec<(u64,u64)> = vec![]; // order_id, quantity
@@ -90,6 +91,7 @@ impl OrderMatcher {
             }
             i += 1;
         }
+
         order_for_decrease.iter().for_each(|(order_id, quantity)| {
             let index = self.orders_hash_map.get(order_id).unwrap();
             self.orders[*index as usize].quantity -= quantity;
@@ -100,7 +102,6 @@ impl OrderMatcher {
             self.orders.remove(*index as usize);
             self.orders_hash_map.remove(order_id);
         });
-
         order_matches
     }
 }
@@ -124,10 +125,12 @@ impl MatcherSystem {
                     while let Some(order) = order_queue_clone.pop() {
                         matcher_system.add_order(order);
                     };
+                    let match_orders = span!(Level::TRACE, "match_orders");
+                    let _ = match_orders.enter();
                     let order_matches = matcher_system.match_orders();
-
+                    drop(match_orders);
                     for order_match in &order_matches {
-                        println!("Buy Order Id: {} Sell Order Id: {} Quantity: {} Price: {}", order_match.buy_order_id, order_match.sell_order_id, order_match.quantity, order_match.price);
+                        tracing::info!("OrderMatch: Buy Order Id: {} Sell Order Id: {} Quantity: {} Price: {}", order_match.buy_order_id, order_match.sell_order_id, order_match.quantity, order_match.price);
                     }
 
                     for order_match in order_matches {
