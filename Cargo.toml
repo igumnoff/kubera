@@ -17,3 +17,4 @@ description = "Kubera library"
 bincode = { version = "2.0.0-rc.3" }
 chrono = { version = "0.4.38"}
 redb = "2.1.1"
+crossbeam-queue = "0.3.11"
