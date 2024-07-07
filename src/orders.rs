@@ -6,7 +6,7 @@ use crate::assets::AssetSystem;
 use crate::matcher::OrderMatch;
 use crate::storage::StorageSystem;
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Order {
     pub id: u64,
     pub account_id: u64,
@@ -28,7 +28,7 @@ pub struct OrderHistory {
     pub status: OrderStatus,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum OrderStatus {
     Open,
     Closed,
@@ -36,19 +36,19 @@ pub enum OrderStatus {
     Cancelled,
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TradeType {
     Buy,
     Sell,
 }
 
-#[derive(PartialEq,Clone, Copy)]
+#[derive(Debug, PartialEq,Clone, Copy)]
 pub enum PriceType {
     Market,
     Limit(f64),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum ExecutionType {
     Full,
     Partial,

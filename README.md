@@ -14,6 +14,12 @@ Trade-Exchange Engine for Stocks, Currencies market written in Rust.
 ## Todo
 - Cryptocurrencies
 
+
+# How to run example
+```bash
+cargo run --example trade-engine
+```
+
 ## Contributing
 I would love to see contributions from the community. If you experience bugs, feel free to open an issue. If you would like to implement a new feature or bug fix, please follow the steps:
 1. Read "[Contributor License Agreement (CLA)](https://github.com/igumnoff/kubera/blob/main/CLA)"

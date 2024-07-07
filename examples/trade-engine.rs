@@ -1,12 +1,25 @@
 use std::sync::Arc;
 use std::time::{SystemTime};
 use chrono::{DateTime, Local};
+use tracing_subscriber::fmt::format::FmtSpan;
 use kubera::accounts::{Account, AccountSystem};
 use kubera::orders::{ExecutionType, Order, OrderStatus, OrderSystem, PriceType, TradeType};
 use kubera::assets::AssetSystem;
 use kubera::matcher::{MatcherSystem};
 use kubera::storage::StorageSystem;
 fn main() {
+
+    let subscriber = tracing_subscriber::fmt()
+        .compact()
+        .with_file(true)
+        .with_line_number(true)
+        .with_thread_ids(true)
+        .with_target(false)
+        .with_span_events(FmtSpan::CLOSE)
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber).unwrap();
+
     let _ = std::fs::remove_dir_all("database");
     let storage_system = Arc::new(StorageSystem::new());
     let assets_system =  Arc::new(AssetSystem::new(&storage_system));
@@ -34,23 +47,28 @@ fn main() {
     let core_id = core_ids[0];
 
     let matcher_system = MatcherSystem::start(stock_id, currency_id, core_id);
-        let order1 = order_system.create_order(Order { id: 0, account_id: account1_id, trade_type: TradeType::Buy, price_type: PriceType::Market, execution_type: ExecutionType::Full, stock_id, currency_id, quantity: 10,  status: OrderStatus::Open, timestamp: SystemTime::now()});
-        let order2 = order_system.create_order(Order { id: 0, account_id: account2_id, trade_type: TradeType::Sell, price_type: PriceType::Limit(100.00), execution_type: ExecutionType::Partial, stock_id, currency_id, quantity: 50,  status: OrderStatus::Open, timestamp: SystemTime::now()});
-        let _ = matcher_system.add_order(order1);
-        let _ = matcher_system.add_order(order2);
-        loop {
-            print_accounts(&accounts_system, &assets_system);
-            println!("--------------");
-            while let Some(order_match) = matcher_system.get_order_match() {
-                order_system.create_order_history(&order_match, &mut accounts_system);
-            }
-            std::thread::sleep(std::time::Duration::from_secs(1));
+    let order1 = order_system.create_order(Order { id: 0, account_id: account1_id, trade_type: TradeType::Buy, price_type: PriceType::Market, execution_type: ExecutionType::Full, stock_id, currency_id, quantity: 10,  status: OrderStatus::Open, timestamp: SystemTime::now()});
+    let order2 = order_system.create_order(Order { id: 0, account_id: account2_id, trade_type: TradeType::Sell, price_type: PriceType::Limit(100.00), execution_type: ExecutionType::Partial, stock_id, currency_id, quantity: 50,  status: OrderStatus::Open, timestamp: SystemTime::now()});
+    let _ = matcher_system.add_order(order1);
+    let _ = matcher_system.add_order(order2);
+    loop {
+        print_accounts(&accounts_system, &assets_system);
+        println!("--------------");
+        while let Some(order_match) = matcher_system.get_order_match() {
+            order_system.create_order_history(&order_match, &mut accounts_system);
         }
+        std::thread::sleep(std::time::Duration::from_secs(1));
+    }
 
 }
 
 fn print_accounts(accounts_system: &AccountSystem, assets_system: &AssetSystem) {
     for account in &accounts_system.accounts {
+
+        tracing::info! {
+            "test"
+        };
+
         print!("Id: {} Account: {} ",account.id,  account.name);
         let datetime: DateTime<Local> = account.timestamp.into();
         println!("Timestamp: {}", datetime.format("%Y-%m-%d %H:%M:%S").to_string());

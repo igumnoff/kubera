@@ -19,3 +19,7 @@ chrono = { version = "0.4.38"}
 redb = "2.1.1"
 crossbeam-queue = "0.3.11"
 core_affinity = "0.8.1"
+tracing = "0.1.40"
+
+[dev-dependencies]
+tracing-subscriber = "0.3.18"

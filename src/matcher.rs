@@ -6,6 +6,7 @@ use crossbeam_queue::ArrayQueue;
 use crate::orders::{Order, PriceType};
 
 
+#[derive(Debug)]
 pub struct OrderMatcher {
     pub stock_id: u64,
     pub currency_id: u64,
@@ -40,6 +41,7 @@ impl OrderMatcher {
         self.orders.push(order);
     }
 
+    #[tracing::instrument(level = "info")]
     pub fn match_orders(&mut self) -> Vec<OrderMatch> {
         let mut order_for_deletion:Vec<u64> = vec![];
         let mut order_for_decrease:Vec<(u64,u64)> = vec![]; // order_id, quantity
