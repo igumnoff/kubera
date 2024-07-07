@@ -13,11 +13,7 @@ readme = "README.md"
 description = "Kubera library"
 
 
-
-
 [dependencies]
-anyhow = "1.0.75"
-thiserror = "1.0.44"
-
-[dev-dependencies]
-env_logger = "0.10.0"
+bincode = { version = "2.0.0-rc.3" }
+chrono = { version = "0.4.38"}
+redb = "2.1.1"
