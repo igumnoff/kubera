@@ -21,7 +21,7 @@ fn main() {
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
 
-    // let _ = std::fs::remove_dir_all("database");
+    let _ = std::fs::remove_dir_all("database");
     let storage_system = Arc::new(StorageSystem::new());
     let mut assets_system =  AssetSystem::new(storage_system.clone());
     if assets_system.get_currencies().len() == 0 {
@@ -58,11 +58,13 @@ fn main() {
     let order2 = order_system.create_order(Order { id: 0, account_id: account2_id, trade_type: TradeType::Sell, price_type: PriceType::Limit(50000.00), execution_type: ExecutionType::Partial, crypto_currency_id: crypto_currency_id, currency_id, quantity: 1.0,  status: OrderStatus::Open, timestamp: SystemTime::now()});
     let _ = matcher_system.add_order(order1);
     let _ = matcher_system.add_order(order2);
+    print_accounts(storage_system.clone());
+    tracing::info!("--------------");
     loop {
-        print_accounts(storage_system.clone());
-        tracing::info!("--------------");
         while let Some(order_match) = matcher_system.get_order_match() {
             order_system.create_order_history(&order_match, &mut accounts_system);
+            print_accounts(storage_system.clone());
+            tracing::info!("--------------");
         }
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
