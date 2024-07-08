@@ -59,12 +59,14 @@ fn main() {
     let _ = matcher_system.add_order(order1);
     let _ = matcher_system.add_order(order2);
     print_accounts(storage_system.clone());
-    tracing::info!("--------------");
     loop {
         while let Some(order_match) = matcher_system.get_order_match() {
             order_system.create_order_history(&order_match, &mut accounts_system);
             print_accounts(storage_system.clone());
-            tracing::info!("--------------");
+            if storage_system.get_account_currency(account1_id, currency_id).unwrap().balance > 0.0 {
+                let order = order_system.create_order(Order { id: 0, account_id: account1_id, trade_type: TradeType::Buy, price_type: PriceType::Market, execution_type: ExecutionType::Full, crypto_currency_id: crypto_currency_id, currency_id, quantity: 0.5,  status: OrderStatus::Open, timestamp: SystemTime::now()});
+                matcher_system.add_order(order);
+            }
         }
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
@@ -104,5 +106,7 @@ fn print_accounts(storage_system: Arc<StorageSystem>) {
             }
         }
     }
+    tracing::info!("--------------");
+
 
 }
