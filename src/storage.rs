@@ -1,6 +1,6 @@
 use bincode::{config, decode_from_slice};
-use crate::accounts::{Account, AccountCurrency, AccountCurrencyHistory, AccountStock, AccountStockHistory};
-use crate::assets::{Currency, Stock};
+use crate::accounts::{Account, AccountCurrency, AccountCurrencyHistory, AccountCryptoCurrency, AccountCryptoCurrencyHistory};
+use crate::assets::{Currency, CryptoCurrency};
 
 use std::any::type_name;
 use redb::{Database, Key, Range, ReadableTable, TableDefinition, TypeName, Value};
@@ -16,11 +16,11 @@ const DATABASE_FOLDER_NAME: &str = "database";
 const ACCOUNTS_DB_NAME: &str = "accounts.redb";
 const ACCOUNTS_TABLE: TableDefinition<u64, Bincode<Account>> = TableDefinition::new("accounts");
 const CURRENCIES_TABLE: TableDefinition<u64, Bincode<Currency>> = TableDefinition::new("currencies");
-const STOCKS_TABLE: TableDefinition<u64, Bincode<Stock>> = TableDefinition::new("stocks");
+const STOCKS_TABLE: TableDefinition<u64, Bincode<CryptoCurrency>> = TableDefinition::new("stocks");
 const ACCOUNT_CURRENCIES_TABLE: TableDefinition<u64, Bincode<AccountCurrency>> = TableDefinition::new("account_currencies");
-const ACCOUNT_STOCKS_TABLE: TableDefinition<u64, Bincode<AccountStock>> = TableDefinition::new("account_stocks");
+const ACCOUNT_STOCKS_TABLE: TableDefinition<u64, Bincode<AccountCryptoCurrency>> = TableDefinition::new("account_stocks");
 const ACCOUNT_CURRENCY_HISTORIES_TABLE: TableDefinition<u64, Bincode<AccountCurrencyHistory>> = TableDefinition::new("account_currency_histories");
-const ACCOUNT_STOCK_HISTORIES_TABLE: TableDefinition<u64, Bincode<AccountStockHistory>> = TableDefinition::new("account_stock_histories");
+const ACCOUNT_STOCK_HISTORIES_TABLE: TableDefinition<u64, Bincode<AccountCryptoCurrencyHistory>> = TableDefinition::new("account_stock_histories");
 const ORDERS_TABLE: TableDefinition<u64, Bincode<Order>> = TableDefinition::new("orders");
 const ORDER_HISTORIES_TABLE: TableDefinition<u64, Bincode<OrderHistory>> = TableDefinition::new("order_histories");
 
@@ -110,7 +110,7 @@ impl StorageSystem {
         }
     }
 
-    pub fn get_last_stock(&self) -> Option<Stock> {
+    pub fn get_last_crypto_currency(&self) -> Option<CryptoCurrency> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(STOCKS_TABLE);
         match table_opt {
@@ -141,11 +141,11 @@ impl StorageSystem {
     }
 
 
-    pub fn add_stock(&self, stock: &Stock) {
+    pub fn add_crypto_currency(&self, crypto_currency: &CryptoCurrency) {
         let write_txn = self.accounts_db.begin_write().unwrap();
         {
             let mut table = write_txn.open_table(STOCKS_TABLE).unwrap();
-            table.insert(&stock.id, stock).unwrap();
+            table.insert(&crypto_currency.id, crypto_currency).unwrap();
         }
         write_txn.commit().unwrap();
     }
@@ -171,7 +171,7 @@ impl StorageSystem {
         }
     }
 
-    pub fn get_stock(&self, stock_id: u64) -> Option<Stock> {
+    pub fn get_stock(&self, stock_id: u64) -> Option<CryptoCurrency> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(STOCKS_TABLE);
         match table_opt {
@@ -210,12 +210,12 @@ impl StorageSystem {
         }
     }
 
-    pub fn load_stocks(&self) -> Vec<Stock> {
+    pub fn load_crypto_currencies(&self) -> Vec<CryptoCurrency> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(STOCKS_TABLE);
         match table_opt {
             Ok(table) => {
-                let iter: Range<u64, Bincode<Stock>> = table.iter().unwrap();
+                let iter: Range<u64, Bincode<CryptoCurrency>> = table.iter().unwrap();
                 let mut stocks = vec![];
                 for acc in iter {
                     stocks.push(acc.unwrap().1.value());
@@ -270,7 +270,7 @@ impl StorageSystem {
         }
     }
 
-    pub fn get_last_account_stock(&self) -> Option<AccountStock> {
+    pub fn get_last_account_stock(&self) -> Option<AccountCryptoCurrency> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(ACCOUNT_STOCKS_TABLE);
         match table_opt {
@@ -291,7 +291,7 @@ impl StorageSystem {
         }
     }
 
-    pub fn get_last_account_stock_history(&self) -> Option<AccountStockHistory> {
+    pub fn get_last_account_stock_history(&self) -> Option<AccountCryptoCurrencyHistory> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(ACCOUNT_STOCK_HISTORIES_TABLE);
         match table_opt {
@@ -377,7 +377,7 @@ impl StorageSystem {
         write_txn.commit().unwrap();
     }
 
-    pub fn add_account_stock(&self, account_stock: &AccountStock) {
+    pub fn add_account_stock(&self, account_stock: &AccountCryptoCurrency) {
         let write_txn = self.accounts_db.begin_write().unwrap();
         {
             let mut table = write_txn.open_table(ACCOUNT_STOCKS_TABLE).unwrap();
@@ -386,12 +386,12 @@ impl StorageSystem {
         write_txn.commit().unwrap();
     }
 
-    pub fn load_account_stocks(&self) -> Vec<AccountStock> {
+    pub fn load_account_stocks(&self) -> Vec<AccountCryptoCurrency> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(ACCOUNT_STOCKS_TABLE);
         match table_opt {
             Ok(table) => {
-                let iter: Range<u64, Bincode<AccountStock>> = table.iter().unwrap();
+                let iter: Range<u64, Bincode<AccountCryptoCurrency>> = table.iter().unwrap();
                 let mut account_stocks = vec![];
                 for acc in iter {
                     account_stocks.push(acc.unwrap().1.value());
@@ -404,18 +404,18 @@ impl StorageSystem {
         }
     }
 
-    pub fn get_account_stock(&self, account_id: u64, stock_id: u64) -> Option<AccountStock> {
-        let account_stocks:Vec<AccountStock> = self.load_account_stocks();
+    pub fn get_account_stock(&self, account_id: u64, stock_id: u64) -> Option<AccountCryptoCurrency> {
+        let account_stocks:Vec<AccountCryptoCurrency> = self.load_account_stocks();
         for acc in account_stocks {
-            if acc.account_id == account_id && acc.stock_id == stock_id {
+            if acc.account_id == account_id && acc.crypto_currency_id == stock_id {
                 return Some(acc);
             }
         }
         None
     }
 
-    pub fn get_account_stocks_by_account_id(&self, account_id: u64) -> Vec<AccountStock> {
-        let account_stocks:Vec<AccountStock> = self.load_account_stocks();
+    pub fn get_account_stocks_by_account_id(&self, account_id: u64) -> Vec<AccountCryptoCurrency> {
+        let account_stocks:Vec<AccountCryptoCurrency> = self.load_account_stocks();
         let mut account_stocks_by_account_id = vec![];
         for acc in account_stocks {
             if acc.account_id == account_id {
@@ -425,7 +425,7 @@ impl StorageSystem {
         account_stocks_by_account_id
     }
 
-    pub fn get_account_stock_by_id(&self, account_stock_id: u64) -> Option<AccountStock> {
+    pub fn get_account_stock_by_id(&self, account_stock_id: u64) -> Option<AccountCryptoCurrency> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(ACCOUNT_STOCKS_TABLE);
         match table_opt {
@@ -446,11 +446,11 @@ impl StorageSystem {
         }
     }
 
-    pub fn update_account_stock(&self, account_stock: AccountStock) {
+    pub fn update_account_stock(&self, account_stock: AccountCryptoCurrency) {
         self.add_account_stock(&account_stock);
     }
 
-    pub fn add_account_stock_history(&self, account_stock_history: &AccountStockHistory) {
+    pub fn add_account_stock_history(&self, account_stock_history: &AccountCryptoCurrencyHistory) {
         let write_txn = self.accounts_db.begin_write().unwrap();
         {
             let mut table = write_txn.open_table(ACCOUNT_STOCK_HISTORIES_TABLE).unwrap();
@@ -598,12 +598,12 @@ impl StorageSystem {
     }
 
 
-    pub fn load_account_stock_histories(&self) -> Vec<AccountStockHistory> {
+    pub fn load_account_stock_histories(&self) -> Vec<AccountCryptoCurrencyHistory> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(ACCOUNT_STOCK_HISTORIES_TABLE);
         match table_opt {
             Ok(table) => {
-                let iter: Range<u64, Bincode<AccountStockHistory>> = table.iter().unwrap();
+                let iter: Range<u64, Bincode<AccountCryptoCurrencyHistory>> = table.iter().unwrap();
                 let mut account_stock_histories = vec![];
                 for acc in iter {
                     account_stock_histories.push(acc.unwrap().1.value());
@@ -615,11 +615,11 @@ impl StorageSystem {
             }
         }
     }
-    pub fn get_stock_history_by_account_id_stock_id(&self, account_id: u64, stock_id: u64) -> Vec<AccountStockHistory> {
-        let account_stock_histories:Vec<AccountStockHistory> = self.load_account_stock_histories();
+    pub fn get_stock_history_by_account_id_stock_id(&self, account_id: u64, stock_id: u64) -> Vec<AccountCryptoCurrencyHistory> {
+        let account_stock_histories:Vec<AccountCryptoCurrencyHistory> = self.load_account_stock_histories();
         let mut account_stock_histories_by_account_id = vec![];
         for acc in account_stock_histories {
-            if acc.account_id == account_id && acc.stock_id == stock_id {
+            if acc.account_id == account_id && acc.crypto_currency_id == stock_id {
                 account_stock_histories_by_account_id.push(acc);
             }
         }

@@ -4,7 +4,7 @@ use chrono::{DateTime, Local};
 use tracing_subscriber::fmt::format::FmtSpan;
 use kubera::accounts::{Account, AccountSystem};
 use kubera::orders::{ExecutionType, Order, OrderStatus, OrderSystem, PriceType, TradeType};
-use kubera::assets::{AssetSystem, Currency, Stock};
+use kubera::assets::{AssetSystem, Currency, CryptoCurrency};
 use kubera::matcher::{MatcherSystem};
 use kubera::storage::StorageSystem;
 fn main() {
@@ -21,23 +21,23 @@ fn main() {
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
 
-    // let _ = std::fs::remove_dir_all("database");
+    let _ = std::fs::remove_dir_all("database");
     let storage_system = Arc::new(StorageSystem::new());
     let mut assets_system =  AssetSystem::new(storage_system.clone());
     if assets_system.get_currencies().len() == 0 {
         let _ = assets_system.create_currency(Currency { id: 0, symbol: "USD".to_string() });
         let _ = assets_system.create_currency(Currency { id: 0, symbol: "EUR".to_string() });
     }
-    if assets_system.get_stocks().len() == 0 {
-        let _ = assets_system.create_stock(Stock { id: 0, symbol: "AAPL".to_string() });
-        let _ = assets_system.create_stock(Stock { id: 0, symbol: "GOOGL".to_string() });
+    if assets_system.get_crypto_currencies().len() == 0 {
+        let _ = assets_system.create_crypto_currency(CryptoCurrency { id: 0, symbol: "BTC".to_string() });
+        let _ = assets_system.create_crypto_currency(CryptoCurrency { id: 0, symbol: "ETH".to_string() });
     }
 
     let assets_system = Arc::new(assets_system);
     let mut accounts_system = AccountSystem::new(storage_system.clone(), assets_system.clone());
 
     let currency_id = assets_system.get_currencies()[0].id;
-    let stock_id = assets_system.get_stocks()[0].id;
+    let stock_id = assets_system.get_crypto_currencies()[0].id;
 
 
     if storage_system.load_accounts().len() == 0 {
@@ -93,10 +93,10 @@ fn print_accounts(storage_system: Arc<StorageSystem>) {
         }
         for account_stock in storage_system.get_account_stocks_by_account_id(account.id) {
             tracing::info! {
-                "CryptoCurrencyId: {} {} Amount: {}", account_stock.id, storage_system.get_stock(account_stock.stock_id).unwrap().symbol, account_stock.quantity
+                "CryptoCurrencyId: {} {} Amount: {}", account_stock.id, storage_system.get_stock(account_stock.crypto_currency_id).unwrap().symbol, account_stock.quantity
             };
 
-            for account_stock_history in storage_system.get_stock_history_by_account_id_stock_id(account.id, account_stock.stock_id) {
+            for account_stock_history in storage_system.get_stock_history_by_account_id_stock_id(account.id, account_stock.crypto_currency_id) {
                 let datetime: DateTime<Local> = account_stock_history.timestamp.into();
                 tracing::info! {
                     "CryptoCurrencyId: {} Quantity: {} Timestamp: {}", account_stock_history.id,  account_stock_history.quantity, datetime.format("%Y-%m-%d %H:%M:%S").to_string()

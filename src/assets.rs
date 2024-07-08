@@ -9,14 +9,14 @@ pub struct Currency {
 }
 
 #[derive(Encode, Decode, Debug)]
-pub struct Stock {
+pub struct CryptoCurrency {
     pub id: u64,
     pub symbol: String,
 }
 
 pub struct AssetSystem {
     pub last_currency_id: u64,
-    pub last_stock_id: u64,
+    pub last_crypto_currency_id: u64,
     pub storage_system: Arc<StorageSystem>,
 }
 
@@ -29,17 +29,17 @@ impl AssetSystem {
                 last_currency_id = currency.id;
             }
         }
-        let mut last_stock_id: u64 = 0;
-        match storage_system.get_last_stock() {
+        let mut last_crypto_currency_id: u64 = 0;
+        match storage_system.get_last_crypto_currency() {
             None => {}
-            Some(stock) => {
-                last_stock_id = stock.id;
+            Some(crypto_currency) => {
+                last_crypto_currency_id = crypto_currency.id;
             }
         }
 
         AssetSystem {
             last_currency_id,
-            last_stock_id,
+            last_crypto_currency_id,
             storage_system,
         }
     }
@@ -51,11 +51,11 @@ impl AssetSystem {
         self.last_currency_id
     }
 
-    pub fn create_stock(&mut self, mut stock: Stock) -> u64 {
-        self.last_stock_id += 1;
-        stock.id = self.last_stock_id;
-        self.storage_system.add_stock(&stock);
-        self.last_stock_id
+    pub fn create_crypto_currency(&mut self, mut crypto_currency: CryptoCurrency) -> u64 {
+        self.last_crypto_currency_id += 1;
+        crypto_currency.id = self.last_crypto_currency_id;
+        self.storage_system.add_crypto_currency(&crypto_currency);
+        self.last_crypto_currency_id
     }
 
     pub fn get_currencies(&self) -> Vec<Currency> {
@@ -64,10 +64,10 @@ impl AssetSystem {
         currencies
     }
 
-    pub fn get_stocks(&self) -> Vec<Stock> {
-        let mut stocks:Vec<Stock> = self.storage_system.load_stocks();
-        stocks.sort_by(|a, b| a.id.cmp(&b.id));
-        stocks
+    pub fn get_crypto_currencies(&self) -> Vec<CryptoCurrency> {
+        let mut crypto_currencies:Vec<CryptoCurrency> = self.storage_system.load_crypto_currencies();
+        crypto_currencies.sort_by(|a, b| a.id.cmp(&b.id));
+        crypto_currencies
     }
 
 }

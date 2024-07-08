@@ -31,18 +31,18 @@ pub struct AccountCurrencyHistory {
 }
 
 #[derive(Encode, Decode, Debug)]
-pub struct AccountStock {
+pub struct AccountCryptoCurrency {
     pub id: u64,
     pub account_id: u64,
-    pub stock_id: u64,
+    pub crypto_currency_id: u64,
     pub quantity: i64,
 }
 
 #[derive(Encode, Decode, Debug)]
-pub struct AccountStockHistory {
+pub struct AccountCryptoCurrencyHistory {
     pub id: u64,
     pub account_id: u64,
-    pub stock_id: u64,
+    pub crypto_currency_id: u64,
     pub quantity: i64,
     pub timestamp: SystemTime,
 }
@@ -163,10 +163,10 @@ impl AccountSystem {
 
     pub fn create_account_stock(&mut self, account_id: u64, stock_id: u64) -> u64 {
         self.account_stocks_last_id += 1;
-        let account_stock = AccountStock {
+        let account_stock = AccountCryptoCurrency {
             id: self.account_stocks_last_id,
             account_id,
-            stock_id,
+            crypto_currency_id: stock_id,
             quantity: 0,
         };
         self.storage_system.add_account_stock(&account_stock);
@@ -191,10 +191,10 @@ impl AccountSystem {
 
     pub fn add_account_stock_history(&mut self, account_id: u64, stock_id: u64, quantity: i64) {
         self.account_stock_histories_last_id += 1;
-        let account_stock_history = AccountStockHistory {
+        let account_stock_history = AccountCryptoCurrencyHistory {
             id: self.account_stock_histories_last_id,
             account_id,
-            stock_id,
+            crypto_currency_id: stock_id,
             quantity,
             timestamp: SystemTime::now(),
         };
