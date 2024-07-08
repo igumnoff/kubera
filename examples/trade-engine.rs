@@ -4,7 +4,7 @@ use chrono::{DateTime, Local};
 use tracing_subscriber::fmt::format::FmtSpan;
 use kubera::accounts::{Account, AccountSystem};
 use kubera::orders::{ExecutionType, Order, OrderStatus, OrderSystem, PriceType, TradeType};
-use kubera::assets::AssetSystem;
+use kubera::assets::{AssetSystem, Currency, Stock};
 use kubera::matcher::{MatcherSystem};
 use kubera::storage::StorageSystem;
 fn main() {
@@ -21,26 +21,34 @@ fn main() {
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
 
-    let _ = std::fs::remove_dir_all("database");
+    // let _ = std::fs::remove_dir_all("database");
     let storage_system = Arc::new(StorageSystem::new());
-    let assets_system =  Arc::new(AssetSystem::new(&storage_system));
+    let mut assets_system =  AssetSystem::new(storage_system.clone());
+    if assets_system.get_currencies().len() == 0 {
+        let _ = assets_system.create_currency(Currency { id: 0, symbol: "USD".to_string() });
+        let _ = assets_system.create_currency(Currency { id: 0, symbol: "EUR".to_string() });
+    }
+    if assets_system.get_stocks().len() == 0 {
+        let _ = assets_system.create_stock(Stock { id: 0, symbol: "AAPL".to_string() });
+        let _ = assets_system.create_stock(Stock { id: 0, symbol: "GOOGL".to_string() });
+    }
+
+    let assets_system = Arc::new(assets_system);
     let mut accounts_system = AccountSystem::new(storage_system.clone(), assets_system.clone());
 
-    let mut currencies = assets_system.currencies.keys().collect::<Vec<&u64>>();
-    currencies.sort();
-    let currency_id = *currencies[0];
-    let stock_id = *assets_system.stocks.keys().next().unwrap();
+    let currency_id = assets_system.get_currencies()[0].id;
+    let stock_id = assets_system.get_stocks()[0].id;
 
 
-    if accounts_system.get_accounts().len() == 0 {
-        let _account1_id = accounts_system.create_account(Account { id: 0, name: "Alice".to_string(), timestamp: SystemTime::now() });
-        let _account2_id = accounts_system.create_account(Account { id: 0, name: "Bob".to_string(), timestamp: SystemTime::now() });
+    if storage_system.load_accounts().len() == 0 {
+        let account1_id = accounts_system.create_account(Account { id: 0, name: "Alice".to_string(), timestamp: SystemTime::now() });
+        let account2_id = accounts_system.create_account(Account { id: 0, name: "Bob".to_string(), timestamp: SystemTime::now() });
+        accounts_system.add_currency_to_account(account1_id, currency_id, 10000.0);
+        accounts_system.add_stock_to_account(account2_id, stock_id, 50);
     }
-    let accounts = accounts_system.get_accounts();
+    let accounts = storage_system.load_accounts();
     let account1_id = accounts[0].id;
     let account2_id = accounts[1].id;
-    accounts_system.add_currency_to_account(account1_id, currency_id, 1000.0);
-    accounts_system.add_stock_to_account(account2_id, stock_id, 50);
 
     let mut order_system = OrderSystem::new(storage_system.clone(), assets_system.clone());
 
@@ -53,7 +61,7 @@ fn main() {
     let _ = matcher_system.add_order(order1);
     let _ = matcher_system.add_order(order2);
     loop {
-        print_accounts(&accounts_system, &assets_system);
+        print_accounts(storage_system.clone());
         tracing::info!("--------------");
         while let Some(order_match) = matcher_system.get_order_match() {
             order_system.create_order_history(&order_match, &mut accounts_system);
@@ -63,22 +71,22 @@ fn main() {
 
 }
 
-fn print_accounts(accounts_system: &AccountSystem, assets_system: &AssetSystem) {
-    for account in accounts_system.get_accounts() {
+fn print_accounts(storage_system: Arc<StorageSystem>) {
+    for account in storage_system.load_accounts() {
 
         let datetime: DateTime<Local> = account.timestamp.into();
         tracing::info! {
             "Id: {} Account: {} Timestamp: {}",account.id,  account.name, datetime.format("%Y-%m-%d %H:%M:%S").to_string()
         };
 
-        for account_currency in accounts_system.account_currencies.get(&account.id).unwrap() {
+        for account_currency in storage_system.get_account_currency_by_account_id(account.id) {
             tracing::info! {
-                "Id: {} Currency: {} Amount: {:.2}", account_currency.id, assets_system.currencies.get(&account_currency.currency_id).unwrap().symbol, account_currency.balance
+                "Id: {} Currency: {} Amount: {:.2}", account_currency.id, storage_system.get_currency(account_currency.currency_id).unwrap().symbol, account_currency.balance
             };
         }
-        for account_stock in accounts_system.account_stocks.get(&account.id).or(Some(&vec![])).unwrap() {
+        for account_stock in storage_system.get_account_stocks_by_account_id(account.id) {
             tracing::info! {
-                "Id: {} Stock: {} Amount: {}", account_stock.id, assets_system.stocks.get(&account_stock.stock_id).unwrap().symbol, account_stock.quantity
+                "Id: {} Stock: {} Amount: {}", account_stock.id, storage_system.get_stock(account_stock.stock_id).unwrap().symbol, account_stock.quantity
             };
         }
     }

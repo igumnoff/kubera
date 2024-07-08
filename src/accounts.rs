@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime};
 use bincode::{Decode, Encode};
@@ -14,14 +13,14 @@ pub struct Account {
 }
 
 
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Debug)]
 pub struct AccountCurrency {
     pub id: u64,
     pub account_id: u64,
     pub currency_id: u64,
     pub balance: f64,
 }
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Debug)]
 pub struct AccountCurrencyHistory {
     pub id: u64,
     pub account_id: u64,
@@ -30,7 +29,7 @@ pub struct AccountCurrencyHistory {
     pub timestamp: SystemTime,
 }
 
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Debug)]
 pub struct AccountStock {
     pub id: u64,
     pub account_id: u64,
@@ -38,8 +37,9 @@ pub struct AccountStock {
     pub quantity: i64,
 }
 
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Debug)]
 pub struct AccountStockHistory {
+    pub id: u64,
     pub account_id: u64,
     pub stock_id: u64,
     pub quantity: i64,
@@ -48,10 +48,6 @@ pub struct AccountStockHistory {
 
 
 pub struct AccountSystem {
-    pub account_currencies: HashMap<u64,Vec<AccountCurrency>>,
-    pub account_currency_histories: HashMap<u64,Vec<AccountCurrencyHistory>>,
-    pub account_stocks: HashMap<u64,Vec<AccountStock>>,
-    pub account_stock_histories: HashMap<u64,Vec<AccountStockHistory>>,
     pub account_last_id: u64,
     pub account_currencies_last_id: u64,
     pub account_currency_histories_last_id: u64,
@@ -65,51 +61,42 @@ pub struct AccountSystem {
 impl AccountSystem {
     pub fn new(storage_system: Arc<StorageSystem>, asset_system: Arc<AssetSystem>) -> AccountSystem {
         let mut account_last_id = 0;
-        let mut account_currencies_last_id = 0;
-        let account_currency_histories_last_id = 0;
-        let account_stocks_last_id = 0;
-        let account_stock_histories_last_id = 0;
-
         match storage_system.get_last_account() {
             None => {}
-            Some(acc) => {
-                account_last_id = acc.id;
+            Some(account) => {
+                account_last_id = account.id;
             }
         }
-
-
-        let mut accounts_hash_map = HashMap::new();
-        let accounts = storage_system.load_accounts();
-        let mut i = 0;
-        for account in &accounts {
-            // if account.id > account_last_id {
-            //     account_last_id = account.id;
-            // }
-            accounts_hash_map.insert(account.id, i);
-            i += 1;
-        }
-
-        let mut account_currencies = HashMap::new();
-
-        for account in &accounts {
-            let account_currencies_vec = storage_system.load_account_currencies(account.id);
-            for account_currency in &account_currencies_vec {
-                if account_currency.id > account_currencies_last_id {
-                    account_currencies_last_id = account_currency.id;
-                }
+        let mut account_currencies_last_id = 0;
+        match storage_system.get_last_account_currency() {
+            None => {}
+            Some(account_currency) => {
+                account_currencies_last_id = account_currency.id;
             }
-            account_currencies.insert(account.id, account_currencies_vec);
         }
-
-        let account_currency_histories = HashMap::new();
-        let account_stocks = HashMap::new();
-        let account_stock_histories = HashMap::new();
+        let mut account_currency_histories_last_id = 0;
+        match storage_system.get_last_account_currency_history() {
+            None => {}
+            Some(account_currency_history) => {
+                account_currency_histories_last_id = account_currency_history.id;
+            }
+        }
+        let mut account_stocks_last_id = 0;
+        match storage_system.get_last_account_stock() {
+            None => {}
+            Some(account_stock) => {
+                account_stocks_last_id = account_stock.id;
+            }
+        }
+        let mut account_stock_histories_last_id = 0;
+        match storage_system.get_last_account_stock_history() {
+            None => {}
+            Some(account_stock_history) => {
+                account_stock_histories_last_id = account_stock_history.id;
+            }
+        }
 
         AccountSystem {
-            account_currencies,
-            account_currency_histories,
-            account_stocks,
-            account_stock_histories,
             account_last_id,
             account_currencies_last_id,
             account_currency_histories_last_id,
@@ -130,21 +117,14 @@ impl AccountSystem {
         let _ = add_account.enter();
         self.storage_system.add_account(&account);
         drop(add_account);
-        let currencies: Vec<u64> = self.asset_system.currencies.iter()
-            .map(|(currency_id, _)| *currency_id)
-            .collect();
-
-        for currency_id in currencies {
-            self.create_account_currency(self.account_last_id, currency_id);
+        let currencies = self.asset_system.get_currencies();
+        for currency in currencies {
+            self.create_account_currency(self.account_last_id, currency.id);
         }
-
-
         self.account_last_id
     }
 
-    pub fn get_accounts(&self) -> Vec<Account> {
-        self.storage_system.load_accounts()
-    }
+
 
     pub fn create_account_currency(&mut self, account_id: u64, currency_id: u64) -> u64 {
         self.account_currencies_last_id += 1;
@@ -154,23 +134,17 @@ impl AccountSystem {
             currency_id,
             balance: 0.0,
         };
-        if !self.account_currencies.contains_key(&account_id) {
-            self.account_currencies.insert(account_id, vec![]);
-        }
-        self.account_currencies.get_mut(&account_id).unwrap().push(account_currency);
-        self.storage_system.save_account_currencies( account_id, self.account_currencies.get(&account_id).unwrap());
+        self.storage_system.add_account_currency(&account_currency);
         self.account_currencies_last_id
     }
 
 
     pub fn add_currency_to_account(&mut self, account_id: u64, currency_id: u64, balance: f64) {
-        {
-            let account_currency = self.account_currencies.get_mut(&account_id).unwrap().iter_mut().find(|x| x.currency_id == currency_id).unwrap();
-            account_currency.balance += balance;
-            let balance = account_currency.balance;
-            self.add_account_currency_history(account_id, currency_id, balance);
-        }
-        self.storage_system.save_account_currencies(account_id, &self.account_currencies.get(&account_id).unwrap());
+        let mut account_currency = self.storage_system.get_account_currency(account_id, currency_id).unwrap();
+        account_currency.balance += balance;
+        let balance = account_currency.balance;
+        self.storage_system.update_account_currency(account_currency);
+        self.add_account_currency_history(account_id, currency_id, balance);
     }
 
     pub fn add_account_currency_history(&mut self, account_id: u64, currency_id: u64, balance: f64) {
@@ -182,40 +156,47 @@ impl AccountSystem {
             balance,
             timestamp: SystemTime::now(),
         };
-        self.account_currency_histories.entry(account_id).or_insert(vec![]).push(account_currency_history);
+        self.storage_system.add_account_currency_history(&account_currency_history);
     }
 
+    pub fn create_account_stock(&mut self, account_id: u64, stock_id: u64) -> u64 {
+        self.account_stocks_last_id += 1;
+        let account_stock = AccountStock {
+            id: self.account_stocks_last_id,
+            account_id,
+            stock_id,
+            quantity: 0,
+        };
+        self.storage_system.add_account_stock(&account_stock);
+        self.account_stocks_last_id
+    }
     pub fn add_stock_to_account(&mut self, account_id: u64, stock_id: u64, quantity: i64) {
-        self.account_stocks.entry(account_id).or_insert(vec![]);
-        match self.account_stocks.get_mut(&account_id).unwrap().iter_mut().find(|x| x.stock_id == stock_id) {
+        let account_stock_opt = self.storage_system.get_account_stock(account_id, stock_id);
+        let mut account_stock  = match account_stock_opt {
             None => {
-                self.account_stocks_last_id += 1;
-                let account_stock = AccountStock {
-                    id: self.account_stocks_last_id,
-                    account_id,
-                    stock_id,
-                    quantity,
-                };
-                self.account_stocks.get_mut(&account_id).unwrap().push(account_stock);
-                self.add_account_stock_history(account_id, stock_id, quantity);
+                let account_stock_id = self.create_account_stock(account_id, stock_id);
+                self.storage_system.get_account_stock_by_id(account_stock_id).unwrap()
             }
             Some(account_stock) => {
-                account_stock.quantity += quantity;
-                let quantity = account_stock.quantity;
-                self.add_account_stock_history(account_id, stock_id, quantity);
+                account_stock
             }
-        }
+        };
+        account_stock.quantity += quantity;
+        let quantity = account_stock.quantity;
+        self.storage_system.update_account_stock(account_stock);
+        self.add_account_stock_history(account_id, stock_id, quantity);
     }
 
     pub fn add_account_stock_history(&mut self, account_id: u64, stock_id: u64, quantity: i64) {
         self.account_stock_histories_last_id += 1;
         let account_stock_history = AccountStockHistory {
+            id: self.account_stock_histories_last_id,
             account_id,
             stock_id,
             quantity,
             timestamp: SystemTime::now(),
         };
-        self.account_stock_histories.entry(account_id).or_insert(vec![]).push(account_stock_history);
+        self.storage_system.add_account_stock_history(&account_stock_history);
     }
 
 }
