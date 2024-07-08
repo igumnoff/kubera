@@ -91,9 +91,9 @@ fn print_accounts(storage_system: Arc<StorageSystem>) {
                 };
             }
         }
-        for account_stock in storage_system.get_account_stocks_by_account_id(account.id) {
+        for account_stock in storage_system.get_account_crypto_currencies_by_account_id(account.id) {
             tracing::info! {
-                "CryptoCurrencyId: {} {} Amount: {}", account_stock.id, storage_system.get_stock(account_stock.crypto_currency_id).unwrap().symbol, account_stock.quantity
+                "CryptoCurrencyId: {} {} Amount: {}", account_stock.id, storage_system.get_crypto_currency(account_stock.crypto_currency_id).unwrap().symbol, account_stock.quantity
             };
 
             for account_stock_history in storage_system.get_stock_history_by_account_id_stock_id(account.id, account_stock.crypto_currency_id) {
