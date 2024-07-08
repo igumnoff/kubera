@@ -16,7 +16,7 @@ fn main() {
         .with_thread_ids(true)
         .with_target(false)
         .with_span_events(FmtSpan::CLOSE)
-        .with_max_level(tracing::Level::TRACE)
+        .with_max_level(tracing::Level::INFO)
         .finish();
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
