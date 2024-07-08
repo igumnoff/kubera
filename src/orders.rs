@@ -15,7 +15,7 @@ pub struct Order {
     pub execution_type: ExecutionType,
     pub crypto_currency_id: u64,
     pub currency_id: u64,
-    pub quantity: u64,
+    pub quantity: f64,
     pub timestamp: SystemTime,
     pub status: OrderStatus,
 }
@@ -24,7 +24,7 @@ pub struct Order {
 pub struct OrderHistory {
     pub id: u64,
     pub order_id: u64,
-    pub quantity: u64,
+    pub quantity: f64,
     pub timestamp: SystemTime,
     pub status: OrderStatus,
 }
@@ -99,7 +99,7 @@ impl OrderSystem {
         {
 
             let mut buy_order: Order = self.storage_system.get_order(order_match.buy_order_id).unwrap();
-            let quantity = self.storage_system.get_order_histories_by_order_id(order_match.buy_order_id).iter().fold(0, |acc, x| acc + x.quantity);
+            let quantity = self.storage_system.get_order_histories_by_order_id(order_match.buy_order_id).iter().fold(0.0, |acc, x| acc + x.quantity);
             let status = if (quantity + order_match.quantity) == buy_order.quantity {
                 OrderStatus::Closed
             } else {
@@ -117,11 +117,11 @@ impl OrderSystem {
             };
             self.storage_system.add_order_history(&order_history);
             accounts_system.add_currency_to_account(buy_order.account_id, buy_order.currency_id, -(order_match.quantity as f64 * order_match.price));
-            accounts_system.add_crypto_currency_to_account(buy_order.account_id, buy_order.crypto_currency_id, order_match.quantity as i64);
+            accounts_system.add_crypto_currency_to_account(buy_order.account_id, buy_order.crypto_currency_id, order_match.quantity as f64);
         }
 
         let mut sell_order: Order = self.storage_system.get_order(order_match.sell_order_id).unwrap();
-        let quantity = self.storage_system.get_order_histories_by_order_id(order_match.sell_order_id).iter().fold(0, |acc, x| acc + x.quantity);
+        let quantity = self.storage_system.get_order_histories_by_order_id(order_match.sell_order_id).iter().fold(0.0, |acc, x| acc + x.quantity);
         let status = if (quantity + order_match.quantity) == sell_order.quantity {
             OrderStatus::Closed
         } else {
@@ -138,8 +138,8 @@ impl OrderSystem {
             status: status,
         };
         self.storage_system.add_order_history(&order_history);
-        accounts_system.add_currency_to_account(sell_order.account_id, sell_order.currency_id, order_match.quantity as f64 * order_match.price);
-        accounts_system.add_crypto_currency_to_account(sell_order.account_id, sell_order.crypto_currency_id, -(order_match.quantity as i64));
+        accounts_system.add_currency_to_account(sell_order.account_id, sell_order.currency_id, order_match.quantity * order_match.price);
+        accounts_system.add_crypto_currency_to_account(sell_order.account_id, sell_order.crypto_currency_id, -(order_match.quantity));
 
     }
 

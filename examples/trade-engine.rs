@@ -21,16 +21,14 @@ fn main() {
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
 
-    let _ = std::fs::remove_dir_all("database");
+    // let _ = std::fs::remove_dir_all("database");
     let storage_system = Arc::new(StorageSystem::new());
     let mut assets_system =  AssetSystem::new(storage_system.clone());
     if assets_system.get_currencies().len() == 0 {
         let _ = assets_system.create_currency(Currency { id: 0, symbol: "USD".to_string() });
-        let _ = assets_system.create_currency(Currency { id: 0, symbol: "EUR".to_string() });
     }
     if assets_system.get_crypto_currencies().len() == 0 {
         let _ = assets_system.create_crypto_currency(CryptoCurrency { id: 0, symbol: "BTC".to_string() });
-        let _ = assets_system.create_crypto_currency(CryptoCurrency { id: 0, symbol: "ETH".to_string() });
     }
 
     let assets_system = Arc::new(assets_system);
@@ -43,8 +41,8 @@ fn main() {
     if storage_system.load_accounts().len() == 0 {
         let account1_id = accounts_system.create_account(Account { id: 0, name: "Alice".to_string(), timestamp: SystemTime::now() });
         let account2_id = accounts_system.create_account(Account { id: 0, name: "Bob".to_string(), timestamp: SystemTime::now() });
-        accounts_system.add_currency_to_account(account1_id, currency_id, 10000.0);
-        accounts_system.add_crypto_currency_to_account(account2_id, crypto_currency_id, 50);
+        accounts_system.add_currency_to_account(account1_id, currency_id, 100000.0);
+        accounts_system.add_crypto_currency_to_account(account2_id, crypto_currency_id, 1.0);
     }
     let accounts = storage_system.load_accounts();
     let account1_id = accounts[0].id;
@@ -56,8 +54,8 @@ fn main() {
     let core_id = core_ids[0];
 
     let matcher_system = MatcherSystem::start(crypto_currency_id, currency_id, core_id);
-    let order1 = order_system.create_order(Order { id: 0, account_id: account1_id, trade_type: TradeType::Buy, price_type: PriceType::Market, execution_type: ExecutionType::Full, crypto_currency_id: crypto_currency_id, currency_id, quantity: 10,  status: OrderStatus::Open, timestamp: SystemTime::now()});
-    let order2 = order_system.create_order(Order { id: 0, account_id: account2_id, trade_type: TradeType::Sell, price_type: PriceType::Limit(100.00), execution_type: ExecutionType::Partial, crypto_currency_id: crypto_currency_id, currency_id, quantity: 50,  status: OrderStatus::Open, timestamp: SystemTime::now()});
+    let order1 = order_system.create_order(Order { id: 0, account_id: account1_id, trade_type: TradeType::Buy, price_type: PriceType::Market, execution_type: ExecutionType::Full, crypto_currency_id: crypto_currency_id, currency_id, quantity: 0.5,  status: OrderStatus::Open, timestamp: SystemTime::now()});
+    let order2 = order_system.create_order(Order { id: 0, account_id: account2_id, trade_type: TradeType::Sell, price_type: PriceType::Limit(50000.00), execution_type: ExecutionType::Partial, crypto_currency_id: crypto_currency_id, currency_id, quantity: 1.0,  status: OrderStatus::Open, timestamp: SystemTime::now()});
     let _ = matcher_system.add_order(order1);
     let _ = matcher_system.add_order(order2);
     loop {
@@ -99,7 +97,7 @@ fn print_accounts(storage_system: Arc<StorageSystem>) {
             for account_crypto_currency_history in storage_system.get_crypto_currency_history_by_account_id_crypto_currency_id(account.id, account_crypto_currency.crypto_currency_id) {
                 let datetime: DateTime<Local> = account_crypto_currency_history.timestamp.into();
                 tracing::info! {
-                    "CryptoCurrencyId: {} Quantity: {} Timestamp: {}", account_crypto_currency_history.id,  account_crypto_currency_history.quantity, datetime.format("%Y-%m-%d %H:%M:%S").to_string()
+                    "CryptoCurrencyHistoryId: {} Quantity: {} Timestamp: {}", account_crypto_currency_history.id,  account_crypto_currency_history.quantity, datetime.format("%Y-%m-%d %H:%M:%S").to_string()
                 };
             }
         }

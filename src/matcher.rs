@@ -19,7 +19,7 @@ pub struct OrderMatcher {
 pub struct OrderMatch {
     pub buy_order_id: u64,
     pub sell_order_id: u64,
-    pub quantity: u64,
+    pub quantity: f64,
     pub price: f64,
     pub timestamp: SystemTime,
 }
@@ -45,7 +45,7 @@ impl OrderMatcher {
     // #[tracing::instrument(level = "info")]
     pub fn match_orders(&mut self) -> Vec<OrderMatch> {
         let mut order_for_deletion:Vec<u64> = vec![];
-        let mut order_for_decrease:Vec<(u64,u64)> = vec![]; // order_id, quantity
+        let mut order_for_decrease:Vec<(u64,f64)> = vec![]; // order_id, quantity
         let mut order_matches = vec![];
         let mut i = 0;
         while i < self.orders.len() {
@@ -60,7 +60,11 @@ impl OrderMatcher {
                                 match order2.price_type {
                                     PriceType::Market => {}
                                     PriceType::Limit(price) => {
-                                        let quantity = std::cmp::min(order.quantity, order2.quantity);
+                                        let quantity = if order.quantity < order2.quantity {
+                                            order.quantity
+                                        } else {
+                                            order2.quantity
+                                        };
                                         let order_match = OrderMatch {
                                             buy_order_id: order.id,
                                             sell_order_id: order2.id,

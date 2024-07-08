@@ -35,7 +35,7 @@ pub struct AccountCryptoCurrency {
     pub id: u64,
     pub account_id: u64,
     pub crypto_currency_id: u64,
-    pub quantity: i64,
+    pub quantity: f64,
 }
 
 #[derive(Encode, Decode, Debug)]
@@ -43,7 +43,7 @@ pub struct AccountCryptoCurrencyHistory {
     pub id: u64,
     pub account_id: u64,
     pub crypto_currency_id: u64,
-    pub quantity: i64,
+    pub quantity: f64,
     pub timestamp: SystemTime,
 }
 
@@ -167,12 +167,12 @@ impl AccountSystem {
             id: self.account_crypto_currencies_last_id,
             account_id,
             crypto_currency_id,
-            quantity: 0,
+            quantity: 0.0,
         };
         self.storage_system.add_account_crypto_currency(&account_crypto_currency);
         self.account_crypto_currencies_last_id
     }
-    pub fn add_crypto_currency_to_account(&mut self, account_id: u64, crypto_curreny_id: u64, quantity: i64) {
+    pub fn add_crypto_currency_to_account(&mut self, account_id: u64, crypto_curreny_id: u64, quantity: f64) {
         let account_crypto_currency_opt = self.storage_system.get_account_crypto_currency(account_id, crypto_curreny_id);
         let mut account_crypto_currency = match account_crypto_currency_opt {
             None => {
@@ -189,7 +189,7 @@ impl AccountSystem {
         self.add_account_crypto_currency_history(account_id, crypto_curreny_id, quantity);
     }
 
-    pub fn add_account_crypto_currency_history(&mut self, account_id: u64, crypto_currency_id: u64, quantity: i64) {
+    pub fn add_account_crypto_currency_history(&mut self, account_id: u64, crypto_currency_id: u64, quantity: f64) {
         self.account_crypto_currency_histories_last_id += 1;
         let account_crypto_currency_history = AccountCryptoCurrencyHistory {
             id: self.account_crypto_currency_histories_last_id,
