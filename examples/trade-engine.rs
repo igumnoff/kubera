@@ -61,12 +61,13 @@ fn main() {
     print_accounts(storage_system.clone());
     loop {
         while let Some(order_match) = matcher_system.get_order_match() {
-            order_system.create_order_history(&order_match, &mut accounts_system);
-            print_accounts(storage_system.clone());
-            if storage_system.get_account_currency(account1_id, currency_id).unwrap().balance > 0.0 {
-                let order = order_system.create_order(Order { id: 0, account_id: account1_id, trade_type: TradeType::Buy, price_type: PriceType::Market, execution_type: ExecutionType::Full, crypto_currency_id: crypto_currency_id, currency_id, quantity: 0.5,  status: OrderStatus::Open, timestamp: SystemTime::now()});
-                matcher_system.add_order(order);
-            }
+           tracing::info!("OrderMatch: Buy Order Id: {} Sell Order Id: {} Quantity: {} Price: {}", order_match.buy_order_id, order_match.sell_order_id, order_match.quantity, order_match.price);
+           order_system.create_order_history(&order_match, &mut accounts_system);
+           print_accounts(storage_system.clone());
+           if storage_system.get_account_currency(account1_id, currency_id).unwrap().balance > 0.0 {
+               let order = order_system.create_order(Order { id: 0, account_id: account1_id, trade_type: TradeType::Buy, price_type: PriceType::Market, execution_type: ExecutionType::Full, crypto_currency_id: crypto_currency_id, currency_id, quantity: 0.5,  status: OrderStatus::Open, timestamp: SystemTime::now()});
+               matcher_system.add_order(order);
+           }
         }
         std::thread::sleep(std::time::Duration::from_secs(1));
     }

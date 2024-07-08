@@ -7,13 +7,62 @@ use tracing::{Level, span};
 use crate::orders::{Order, PriceType};
 
 
+//  #[derive(Debug, Clone, Copy, Encode, Decode)]
+// pub struct Order {
+//     pub id: u64,
+//     pub account_id: u64,
+//     pub trade_type: TradeType,
+//     pub price_type: PriceType,
+//     pub execution_type: ExecutionType,
+//     pub crypto_currency_id: u64,
+//     pub currency_id: u64,
+//     pub quantity: f64,
+//     pub timestamp: SystemTime,
+//     pub status: OrderStatus,
+// }
+//
+// #[derive(Debug, Clone, Copy, Encode, Decode)]
+// pub struct OrderHistory {
+//     pub id: u64,
+//     pub order_id: u64,
+//     pub quantity: f64,
+//     pub timestamp: SystemTime,
+//     pub status: OrderStatus,
+// }
+//
+// #[derive(Debug, Clone, Copy, Encode, Decode)]
+// pub enum OrderStatus {
+//     Open,
+//     Closed,
+//     PartiallyFilled,
+//     Cancelled,
+// }
+//
+// #[derive(Debug, PartialEq, Clone, Copy, Encode, Decode)]
+// pub enum TradeType {
+//     Buy,
+//     Sell,
+// }
+//
+// #[derive(Debug, PartialEq,Clone, Copy, Encode, Decode)]
+// pub enum PriceType {
+//     Market,
+//     Limit(f64),
+// }
+//
+// #[derive(Debug, Clone, Copy, Encode, Decode)]
+// pub enum ExecutionType {
+//     Full,
+//     Partial,
+// }
+
+
 #[derive(Debug)]
 pub struct OrderMatcher {
     pub crypto_currency_id: u64,
     pub currency_id: u64,
-    pub orders: Vec<Order>,
-    pub orders_hash_map: HashMap<u64,u64>, // order.id -> index in orders
-    pub timestamp: SystemTime,
+    pub buy_orders: HashMap<u64,Order>,
+    pub sell_orders: HashMap<u64,Order>,
 }
 
 pub struct OrderMatch {
@@ -28,85 +77,106 @@ impl OrderMatcher {
     pub fn new(crypto_currency_id: u64, currency_id: u64) -> OrderMatcher {
         OrderMatcher {
             crypto_currency_id,
-                currency_id,
-                orders: vec![],
-                orders_hash_map: HashMap::new(),
-                timestamp: SystemTime::now(),
+            currency_id,
+            buy_orders: Default::default(),
+            sell_orders: Default::default(),
         }
     }
 
     pub fn add_order(&mut self, order: Order) {
         assert!(order.crypto_currency_id == self.crypto_currency_id);
         assert!(order.currency_id == self.currency_id);
-        self.orders_hash_map.insert(order.id, self.orders.len() as u64);
-        self.orders.push(order);
+        if order.trade_type == crate::orders::TradeType::Buy {
+            self.buy_orders.insert(order.id, order);
+        } else {
+            self.sell_orders.insert(order.id, order);
+        }
     }
 
-    // #[tracing::instrument(level = "info")]
     pub fn match_orders(&mut self) -> Vec<OrderMatch> {
-        let mut order_for_deletion:Vec<u64> = vec![];
-        let mut order_for_decrease:Vec<(u64,f64)> = vec![]; // order_id, quantity
-        let mut order_matches = vec![];
-        let mut i = 0;
-        while i < self.orders.len() {
-            let order = &self.orders[i];
-            if order.trade_type == crate::orders::TradeType::Buy {
-                let mut j = 0;
-                while j < self.orders.len() {
-                    let order2 = &self.orders[j];
-                    if order2.trade_type == crate::orders::TradeType::Sell {
-                        if order.crypto_currency_id == order2.crypto_currency_id && order.currency_id == order2.currency_id {
-                            if order.price_type == crate::orders::PriceType::Market {
-                                match order2.price_type {
-                                    PriceType::Market => {}
-                                    PriceType::Limit(price) => {
-                                        let quantity = if order.quantity < order2.quantity {
-                                            order.quantity
-                                        } else {
-                                            order2.quantity
-                                        };
-                                        let order_match = OrderMatch {
-                                            buy_order_id: order.id,
-                                            sell_order_id: order2.id,
-                                            quantity,
-                                            price,
-                                            timestamp: self.timestamp,
-                                        };
-                                        order_matches.push(order_match);
-                                        // TODO: check if the account has enough currency and crypto currency
-                                        if order.quantity == quantity {
-                                            order_for_deletion.push(order.id);
-                                        } else {
-                                            order_for_decrease.push((order.id, quantity));
-                                        }
-                                        if order2.quantity == quantity {
-                                            order_for_deletion.push(order2.id);
-                                        } else {
-                                            order_for_decrease.push((order2.id, quantity));
-                                        }
-                                    }
-                                }
+        self.print_orders();
 
-                            }
-                        }
-                    }
-                    j += 1;
-                }
+        let mut matches = Vec::new();
+
+        // Use a sorted vector to store orders by price: highest price first for buys, lowest first for sells
+        let mut buy_orders: Vec<_> = self.buy_orders.drain().map(|(_, o)| o).collect();
+        let mut sell_orders: Vec<_> = self.sell_orders.drain().map(|(_, o)| o).collect();
+
+        // Sort buy orders descending by price, and sell orders ascending by price
+        buy_orders.sort_by(|a, b| match (a.price_type, b.price_type) {
+            (PriceType::Limit(a_price), PriceType::Limit(b_price)) => b_price.partial_cmp(&a_price).unwrap(),
+            _ => std::cmp::Ordering::Equal,
+        });
+
+        sell_orders.sort_by(|a, b| match (a.price_type, b.price_type) {
+            (PriceType::Limit(a_price), PriceType::Limit(b_price)) => a_price.partial_cmp(&b_price).unwrap(),
+            _ => std::cmp::Ordering::Equal,
+        });
+
+        // Matching logic
+        let mut i = 0;
+        let mut j = 0;
+
+        while i < buy_orders.len() && j < sell_orders.len() {
+            let buy = &buy_orders[i];
+            let sell = &sell_orders[j];
+
+            // Check for match
+            match (buy.price_type, sell.price_type) {
+                (PriceType::Market, PriceType::Limit(sell_price))   => {
+                    // Calculate matched quantity
+                    let matched_quantity = buy.quantity.min(sell.quantity);
+
+                    // Create match record
+                    matches.push(OrderMatch {
+                        buy_order_id: buy.id,
+                        sell_order_id: sell.id,
+                        quantity: matched_quantity,
+                        price: sell_price, // Execute at sell price
+                        timestamp: SystemTime::now(),
+                    });
+
+                    // Update quantities
+                    buy_orders[i].quantity -= matched_quantity;
+                    sell_orders[j].quantity -= matched_quantity;
+                    j += 1; // move to next sell order
+                    i += 1; // move to next buy order
+            },
+                _ => i += 1, // No match, move to next buy order
             }
-            i += 1;
+
         }
 
-        order_for_decrease.iter().for_each(|(order_id, quantity)| {
-            let index = self.orders_hash_map.get(order_id).unwrap();
-            self.orders[*index as usize].quantity -= quantity;
-        });
+        // Any remaining unmatched orders are put back into the HashMap
+        for buy in buy_orders {
+            if buy.quantity > 0.0 {
+                self.buy_orders.insert(buy.id, buy);
+            } else {
+                self.buy_orders.remove(&buy.id);
+            }
+        }
+        for sell in sell_orders {
+            if sell.quantity > 0.0 {
+                self.sell_orders.insert(sell.id, sell);
+            } else {
+                self.sell_orders.remove(&sell.id);
+            }
+        }
 
-        order_for_deletion.iter().for_each(|order_id| {
-            let index = self.orders_hash_map.get(order_id).unwrap();
-            self.orders.remove(*index as usize);
-            self.orders_hash_map.remove(order_id);
-        });
-        order_matches
+        self.print_orders();
+        matches
+    }
+
+    fn print_orders(&self) {
+        for order in self.buy_orders.values() {
+            tracing::info!("Buy Order: {:?}", order);
+        }
+        for order in self.sell_orders.values() {
+            tracing::info!("Sell Order: {:?}", order);
+        }
+        if !self.buy_orders.is_empty() && !self.sell_orders.is_empty() {
+            tracing::info!("-----------------");
+        }
     }
 }
 
@@ -133,10 +203,6 @@ impl MatcherSystem {
                     let _ = match_orders.enter();
                     let order_matches = matcher_system.match_orders();
                     drop(match_orders);
-                    for order_match in &order_matches {
-                        tracing::info!("OrderMatch: Buy Order Id: {} Sell Order Id: {} Quantity: {} Price: {}", order_match.buy_order_id, order_match.sell_order_id, order_match.quantity, order_match.price);
-                    }
-
                     for order_match in order_matches {
                         let _ = order_match_queue_clone.push(order_match);
                     }
