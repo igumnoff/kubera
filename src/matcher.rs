@@ -102,17 +102,6 @@ impl OrderMatcher {
         let mut buy_orders: Vec<_> = self.buy_orders.drain().map(|(_, o)| o).collect();
         let mut sell_orders: Vec<_> = self.sell_orders.drain().map(|(_, o)| o).collect();
 
-        // Sort buy orders descending by price, and sell orders ascending by price
-        buy_orders.sort_by(|a, b| match (a.price_type, b.price_type) {
-            (PriceType::Limit(a_price), PriceType::Limit(b_price)) => b_price.partial_cmp(&a_price).unwrap(),
-            _ => std::cmp::Ordering::Equal,
-        });
-
-        sell_orders.sort_by(|a, b| match (a.price_type, b.price_type) {
-            (PriceType::Limit(a_price), PriceType::Limit(b_price)) => a_price.partial_cmp(&b_price).unwrap(),
-            _ => std::cmp::Ordering::Equal,
-        });
-
         // Matching logic
         let mut i = 0;
         let mut j = 0;
