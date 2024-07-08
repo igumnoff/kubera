@@ -6,57 +6,6 @@ use crossbeam_queue::ArrayQueue;
 use tracing::{Level, span};
 use crate::orders::{Order, PriceType};
 
-
-//  #[derive(Debug, Clone, Copy, Encode, Decode)]
-// pub struct Order {
-//     pub id: u64,
-//     pub account_id: u64,
-//     pub trade_type: TradeType,
-//     pub price_type: PriceType,
-//     pub execution_type: ExecutionType,
-//     pub crypto_currency_id: u64,
-//     pub currency_id: u64,
-//     pub quantity: f64,
-//     pub timestamp: SystemTime,
-//     pub status: OrderStatus,
-// }
-//
-// #[derive(Debug, Clone, Copy, Encode, Decode)]
-// pub struct OrderHistory {
-//     pub id: u64,
-//     pub order_id: u64,
-//     pub quantity: f64,
-//     pub timestamp: SystemTime,
-//     pub status: OrderStatus,
-// }
-//
-// #[derive(Debug, Clone, Copy, Encode, Decode)]
-// pub enum OrderStatus {
-//     Open,
-//     Closed,
-//     PartiallyFilled,
-//     Cancelled,
-// }
-//
-// #[derive(Debug, PartialEq, Clone, Copy, Encode, Decode)]
-// pub enum TradeType {
-//     Buy,
-//     Sell,
-// }
-//
-// #[derive(Debug, PartialEq,Clone, Copy, Encode, Decode)]
-// pub enum PriceType {
-//     Market,
-//     Limit(f64),
-// }
-//
-// #[derive(Debug, Clone, Copy, Encode, Decode)]
-// pub enum ExecutionType {
-//     Full,
-//     Partial,
-// }
-
-
 #[derive(Debug)]
 pub struct OrderMatcher {
     pub crypto_currency_id: u64,
