@@ -81,13 +81,27 @@ fn print_accounts(storage_system: Arc<StorageSystem>) {
 
         for account_currency in storage_system.get_account_currency_by_account_id(account.id) {
             tracing::info! {
-                "Id: {} Currency: {} Amount: {:.2}", account_currency.id, storage_system.get_currency(account_currency.currency_id).unwrap().symbol, account_currency.balance
+                "Id: {} Currency: {} Balance: {:.2}", account_currency.id, storage_system.get_currency(account_currency.currency_id).unwrap().symbol, account_currency.balance
             };
+
+            for account_currency_history in storage_system.get_currency_history_by_account_id_account_currency_id(account.id, account_currency.id) {
+                let datetime: DateTime<Local> = account_currency_history.timestamp.into();
+                tracing::info! {
+                    "Id: {} CurrencyHistory Balance: {:.2} Timestamp: {}", account_currency_history.id,  account_currency_history.balance, datetime.format("%Y-%m-%d %H:%M:%S").to_string()
+                };
+            }
         }
         for account_stock in storage_system.get_account_stocks_by_account_id(account.id) {
             tracing::info! {
                 "Id: {} Stock: {} Amount: {}", account_stock.id, storage_system.get_stock(account_stock.stock_id).unwrap().symbol, account_stock.quantity
             };
+
+            for account_stock_history in storage_system.get_stock_history_by_account_id_stock_id(account.id, account_stock.stock_id) {
+                let datetime: DateTime<Local> = account_stock_history.timestamp.into();
+                tracing::info! {
+                    "Id: {} StockHistory Quantity: {} Timestamp: {}", account_stock_history.id,  account_stock_history.quantity, datetime.format("%Y-%m-%d %H:%M:%S").to_string()
+                };
+            }
         }
     }
 

@@ -24,6 +24,7 @@ pub struct AccountCurrency {
 pub struct AccountCurrencyHistory {
     pub id: u64,
     pub account_id: u64,
+    pub account_currency_id: u64,
     pub currency_id: u64,
     pub balance: f64,
     pub timestamp: SystemTime,
@@ -143,15 +144,16 @@ impl AccountSystem {
         let mut account_currency = self.storage_system.get_account_currency(account_id, currency_id).unwrap();
         account_currency.balance += balance;
         let balance = account_currency.balance;
-        self.storage_system.update_account_currency(account_currency);
-        self.add_account_currency_history(account_id, currency_id, balance);
+        self.storage_system.update_account_currency(&account_currency);
+        self.add_account_currency_history(account_id, account_currency.id, currency_id, balance);
     }
 
-    pub fn add_account_currency_history(&mut self, account_id: u64, currency_id: u64, balance: f64) {
+    pub fn add_account_currency_history(&mut self, account_id: u64, account_currency_id: u64,  currency_id: u64, balance: f64) {
         self.account_currency_histories_last_id += 1;
         let account_currency_history = AccountCurrencyHistory {
             id: self.account_currency_histories_last_id,
             account_id,
+            account_currency_id,
             currency_id,
             balance,
             timestamp: SystemTime::now(),

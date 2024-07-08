@@ -368,11 +368,11 @@ impl StorageSystem {
         write_txn.commit().unwrap();
     }
 
-    pub fn update_account_currency(&self, account_currency: AccountCurrency) {
+    pub fn update_account_currency(&self, account_currency: &AccountCurrency) {
         let write_txn = self.accounts_db.begin_write().unwrap();
         {
             let mut table = write_txn.open_table(ACCOUNT_CURRENCIES_TABLE).unwrap();
-            table.insert(&account_currency.id, &account_currency).unwrap();
+            table.insert(&account_currency.id, account_currency).unwrap();
         }
         write_txn.commit().unwrap();
     }
@@ -567,6 +567,65 @@ impl StorageSystem {
             }
         }
     }
+
+    pub fn load_account_currency_histories(&self) -> Vec<AccountCurrencyHistory> {
+        let read_txn = self.accounts_db.begin_read().unwrap();
+        let table_opt = read_txn.open_table(ACCOUNT_CURRENCY_HISTORIES_TABLE);
+        match table_opt {
+            Ok(table) => {
+                let iter: Range<u64, Bincode<AccountCurrencyHistory>> = table.iter().unwrap();
+                let mut account_currency_histories = vec![];
+                for acc in iter {
+                    account_currency_histories.push(acc.unwrap().1.value());
+                }
+                account_currency_histories
+            }
+            Err(_) => {
+                vec![]
+            }
+        }
+    }
+
+    pub fn get_currency_history_by_account_id_account_currency_id(&self, account_id: u64, account_currency_id: u64) -> Vec<AccountCurrencyHistory> {
+        let account_currency_histories:Vec<AccountCurrencyHistory> = self.load_account_currency_histories();
+        let mut account_currency_histories_by_account_id = vec![];
+        for acc in account_currency_histories {
+            if acc.account_id == account_id && acc.account_currency_id == account_currency_id {
+                account_currency_histories_by_account_id.push(acc);
+            }
+        }
+        account_currency_histories_by_account_id
+    }
+
+
+    pub fn load_account_stock_histories(&self) -> Vec<AccountStockHistory> {
+        let read_txn = self.accounts_db.begin_read().unwrap();
+        let table_opt = read_txn.open_table(ACCOUNT_STOCK_HISTORIES_TABLE);
+        match table_opt {
+            Ok(table) => {
+                let iter: Range<u64, Bincode<AccountStockHistory>> = table.iter().unwrap();
+                let mut account_stock_histories = vec![];
+                for acc in iter {
+                    account_stock_histories.push(acc.unwrap().1.value());
+                }
+                account_stock_histories
+            }
+            Err(_) => {
+                vec![]
+            }
+        }
+    }
+    pub fn get_stock_history_by_account_id_stock_id(&self, account_id: u64, stock_id: u64) -> Vec<AccountStockHistory> {
+        let account_stock_histories:Vec<AccountStockHistory> = self.load_account_stock_histories();
+        let mut account_stock_histories_by_account_id = vec![];
+        for acc in account_stock_histories {
+            if acc.account_id == account_id && acc.stock_id == stock_id {
+                account_stock_histories_by_account_id.push(acc);
+            }
+        }
+        account_stock_histories_by_account_id
+    }
+
 }
 
 
