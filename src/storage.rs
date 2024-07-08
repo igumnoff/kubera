@@ -615,11 +615,11 @@ impl StorageSystem {
             }
         }
     }
-    pub fn get_crypto_currency_history_by_account_id_crypto_currency_id(&self, account_id: u64, stock_id: u64) -> Vec<AccountCryptoCurrencyHistory> {
+    pub fn get_crypto_currency_history_by_account_id_crypto_currency_id(&self, account_id: u64, crypto_currency_id: u64) -> Vec<AccountCryptoCurrencyHistory> {
         let account_crypto_currency_histories:Vec<AccountCryptoCurrencyHistory> = self.load_account_crypto_currency_histories();
         let mut account_crypto_currency_histories_by_account_id = vec![];
         for acc in account_crypto_currency_histories {
-            if acc.account_id == account_id && acc.crypto_currency_id == stock_id {
+            if acc.account_id == account_id && acc.crypto_currency_id == crypto_currency_id {
                 account_crypto_currency_histories_by_account_id.push(acc);
             }
         }

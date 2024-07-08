@@ -37,14 +37,14 @@ fn main() {
     let mut accounts_system = AccountSystem::new(storage_system.clone(), assets_system.clone());
 
     let currency_id = assets_system.get_currencies()[0].id;
-    let stock_id = assets_system.get_crypto_currencies()[0].id;
+    let crypto_currency_id = assets_system.get_crypto_currencies()[0].id;
 
 
     if storage_system.load_accounts().len() == 0 {
         let account1_id = accounts_system.create_account(Account { id: 0, name: "Alice".to_string(), timestamp: SystemTime::now() });
         let account2_id = accounts_system.create_account(Account { id: 0, name: "Bob".to_string(), timestamp: SystemTime::now() });
         accounts_system.add_currency_to_account(account1_id, currency_id, 10000.0);
-        accounts_system.add_crypto_currency_to_account(account2_id, stock_id, 50);
+        accounts_system.add_crypto_currency_to_account(account2_id, crypto_currency_id, 50);
     }
     let accounts = storage_system.load_accounts();
     let account1_id = accounts[0].id;
@@ -55,9 +55,9 @@ fn main() {
     let core_ids = core_affinity::get_core_ids().unwrap();
     let core_id = core_ids[0];
 
-    let matcher_system = MatcherSystem::start(stock_id, currency_id, core_id);
-    let order1 = order_system.create_order(Order { id: 0, account_id: account1_id, trade_type: TradeType::Buy, price_type: PriceType::Market, execution_type: ExecutionType::Full, crypto_currency_id: stock_id, currency_id, quantity: 10,  status: OrderStatus::Open, timestamp: SystemTime::now()});
-    let order2 = order_system.create_order(Order { id: 0, account_id: account2_id, trade_type: TradeType::Sell, price_type: PriceType::Limit(100.00), execution_type: ExecutionType::Partial, crypto_currency_id: stock_id, currency_id, quantity: 50,  status: OrderStatus::Open, timestamp: SystemTime::now()});
+    let matcher_system = MatcherSystem::start(crypto_currency_id, currency_id, core_id);
+    let order1 = order_system.create_order(Order { id: 0, account_id: account1_id, trade_type: TradeType::Buy, price_type: PriceType::Market, execution_type: ExecutionType::Full, crypto_currency_id: crypto_currency_id, currency_id, quantity: 10,  status: OrderStatus::Open, timestamp: SystemTime::now()});
+    let order2 = order_system.create_order(Order { id: 0, account_id: account2_id, trade_type: TradeType::Sell, price_type: PriceType::Limit(100.00), execution_type: ExecutionType::Partial, crypto_currency_id: crypto_currency_id, currency_id, quantity: 50,  status: OrderStatus::Open, timestamp: SystemTime::now()});
     let _ = matcher_system.add_order(order1);
     let _ = matcher_system.add_order(order2);
     loop {
@@ -91,12 +91,12 @@ fn print_accounts(storage_system: Arc<StorageSystem>) {
                 };
             }
         }
-        for account_stock in storage_system.get_account_crypto_currencies_by_account_id(account.id) {
+        for account_crypto_currency in storage_system.get_account_crypto_currencies_by_account_id(account.id) {
             tracing::info! {
-                "CryptoCurrencyId: {} {} Amount: {}", account_stock.id, storage_system.get_crypto_currency(account_stock.crypto_currency_id).unwrap().symbol, account_stock.quantity
+                "CryptoCurrencyId: {} {} Amount: {}", account_crypto_currency.id, storage_system.get_crypto_currency(account_crypto_currency.crypto_currency_id).unwrap().symbol, account_crypto_currency.quantity
             };
 
-            for account_crypto_currency_history in storage_system.get_crypto_currency_history_by_account_id_crypto_currency_id(account.id, account_stock.crypto_currency_id) {
+            for account_crypto_currency_history in storage_system.get_crypto_currency_history_by_account_id_crypto_currency_id(account.id, account_crypto_currency.crypto_currency_id) {
                 let datetime: DateTime<Local> = account_crypto_currency_history.timestamp.into();
                 tracing::info! {
                     "CryptoCurrencyId: {} Quantity: {} Timestamp: {}", account_crypto_currency_history.id,  account_crypto_currency_history.quantity, datetime.format("%Y-%m-%d %H:%M:%S").to_string()
