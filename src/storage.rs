@@ -377,7 +377,7 @@ impl StorageSystem {
         write_txn.commit().unwrap();
     }
 
-    pub fn add_account_stock(&self, account_stock: &AccountCryptoCurrency) {
+    pub fn add_account_crypto_currency(&self, account_stock: &AccountCryptoCurrency) {
         let write_txn = self.accounts_db.begin_write().unwrap();
         {
             let mut table = write_txn.open_table(ACCOUNT_STOCKS_TABLE).unwrap();
@@ -404,7 +404,7 @@ impl StorageSystem {
         }
     }
 
-    pub fn get_account_stock(&self, account_id: u64, stock_id: u64) -> Option<AccountCryptoCurrency> {
+    pub fn get_account_crypto_currency(&self, account_id: u64, stock_id: u64) -> Option<AccountCryptoCurrency> {
         let account_stocks:Vec<AccountCryptoCurrency> = self.load_account_stocks();
         for acc in account_stocks {
             if acc.account_id == account_id && acc.crypto_currency_id == stock_id {
@@ -425,7 +425,7 @@ impl StorageSystem {
         account_stocks_by_account_id
     }
 
-    pub fn get_account_stock_by_id(&self, account_stock_id: u64) -> Option<AccountCryptoCurrency> {
+    pub fn get_account_crypto_currency_by_id(&self, account_stock_id: u64) -> Option<AccountCryptoCurrency> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(ACCOUNT_STOCKS_TABLE);
         match table_opt {
@@ -446,11 +446,11 @@ impl StorageSystem {
         }
     }
 
-    pub fn update_account_stock(&self, account_stock: AccountCryptoCurrency) {
-        self.add_account_stock(&account_stock);
+    pub fn update_account_crypto_currency(&self, account_stock: AccountCryptoCurrency) {
+        self.add_account_crypto_currency(&account_stock);
     }
 
-    pub fn add_account_stock_history(&self, account_stock_history: &AccountCryptoCurrencyHistory) {
+    pub fn add_account_crypto_currency_history(&self, account_stock_history: &AccountCryptoCurrencyHistory) {
         let write_txn = self.accounts_db.begin_write().unwrap();
         {
             let mut table = write_txn.open_table(ACCOUNT_STOCK_HISTORIES_TABLE).unwrap();

@@ -44,7 +44,7 @@ fn main() {
         let account1_id = accounts_system.create_account(Account { id: 0, name: "Alice".to_string(), timestamp: SystemTime::now() });
         let account2_id = accounts_system.create_account(Account { id: 0, name: "Bob".to_string(), timestamp: SystemTime::now() });
         accounts_system.add_currency_to_account(account1_id, currency_id, 10000.0);
-        accounts_system.add_stock_to_account(account2_id, stock_id, 50);
+        accounts_system.add_crypto_currency_to_account(account2_id, stock_id, 50);
     }
     let accounts = storage_system.load_accounts();
     let account1_id = accounts[0].id;

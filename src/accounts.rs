@@ -161,44 +161,44 @@ impl AccountSystem {
         self.storage_system.add_account_currency_history(&account_currency_history);
     }
 
-    pub fn create_account_stock(&mut self, account_id: u64, stock_id: u64) -> u64 {
+    pub fn create_account_crypto_currency(&mut self, account_id: u64, crypto_currency_id: u64) -> u64 {
         self.account_crypto_currencies_last_id += 1;
-        let account_stock = AccountCryptoCurrency {
+        let account_crypto_currency = AccountCryptoCurrency {
             id: self.account_crypto_currencies_last_id,
             account_id,
-            crypto_currency_id: stock_id,
+            crypto_currency_id,
             quantity: 0,
         };
-        self.storage_system.add_account_stock(&account_stock);
+        self.storage_system.add_account_crypto_currency(&account_crypto_currency);
         self.account_crypto_currencies_last_id
     }
-    pub fn add_stock_to_account(&mut self, account_id: u64, stock_id: u64, quantity: i64) {
-        let account_stock_opt = self.storage_system.get_account_stock(account_id, stock_id);
-        let mut account_stock  = match account_stock_opt {
+    pub fn add_crypto_currency_to_account(&mut self, account_id: u64, crypto_curreny_id: u64, quantity: i64) {
+        let account_crypto_currency_opt = self.storage_system.get_account_crypto_currency(account_id, crypto_curreny_id);
+        let mut account_crypto_currency = match account_crypto_currency_opt {
             None => {
-                let account_stock_id = self.create_account_stock(account_id, stock_id);
-                self.storage_system.get_account_stock_by_id(account_stock_id).unwrap()
+                let account_crypto_currency_id = self.create_account_crypto_currency(account_id, crypto_curreny_id);
+                self.storage_system.get_account_crypto_currency_by_id(account_crypto_currency_id).unwrap()
             }
-            Some(account_stock) => {
-                account_stock
+            Some(account_crypto_currency) => {
+                account_crypto_currency
             }
         };
-        account_stock.quantity += quantity;
-        let quantity = account_stock.quantity;
-        self.storage_system.update_account_stock(account_stock);
-        self.add_account_stock_history(account_id, stock_id, quantity);
+        account_crypto_currency.quantity += quantity;
+        let quantity = account_crypto_currency.quantity;
+        self.storage_system.update_account_crypto_currency(account_crypto_currency);
+        self.add_account_crypto_currency_history(account_id, crypto_curreny_id, quantity);
     }
 
-    pub fn add_account_stock_history(&mut self, account_id: u64, stock_id: u64, quantity: i64) {
+    pub fn add_account_crypto_currency_history(&mut self, account_id: u64, crypto_currency_id: u64, quantity: i64) {
         self.account_crypto_currency_histories_last_id += 1;
-        let account_stock_history = AccountCryptoCurrencyHistory {
+        let account_crypto_currency_history = AccountCryptoCurrencyHistory {
             id: self.account_crypto_currency_histories_last_id,
             account_id,
-            crypto_currency_id: stock_id,
+            crypto_currency_id,
             quantity,
             timestamp: SystemTime::now(),
         };
-        self.storage_system.add_account_stock_history(&account_stock_history);
+        self.storage_system.add_account_crypto_currency_history(&account_crypto_currency_history);
     }
 
 }
