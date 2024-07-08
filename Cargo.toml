@@ -1,6 +1,6 @@
 [package]
 name = "kubera"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 
 authors = ["Evgeny Igumnov <igumnovnsk@gmail.com>"]
@@ -10,7 +10,7 @@ license-file = "LICENSE"
 keywords = []
 categories = []
 readme = "README.md"
-description = "Kubera library"
+description = "Trade-Exchange Engine Library for Cryptocurrencies market written in Rust."
 
 
 [dependencies]
