@@ -94,7 +94,7 @@ impl OrderMatcher {
     }
 
     pub fn match_orders(&mut self) -> Vec<OrderMatch> {
-        self.print_orders();
+        self.print_orders("Before Matching");
 
         let mut matches = Vec::new();
 
@@ -148,19 +148,19 @@ impl OrderMatcher {
             }
         }
 
-        self.print_orders();
+        self.print_orders("After Matching");
         matches
     }
 
-    fn print_orders(&self) {
+    fn print_orders(&self, title: &str) {
+        if !self.buy_orders.is_empty() || !self.sell_orders.is_empty() {
+            tracing::info!("{title}");
+        }
         for order in self.buy_orders.values() {
             tracing::info!("Buy Order: {:?}", order);
         }
         for order in self.sell_orders.values() {
             tracing::info!("Sell Order: {:?}", order);
-        }
-        if !self.buy_orders.is_empty() && !self.sell_orders.is_empty() {
-            tracing::info!("-----------------");
         }
     }
 }
