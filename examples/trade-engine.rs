@@ -107,7 +107,5 @@ fn print_accounts(storage_system: Arc<StorageSystem>) {
             }
         }
     }
-    tracing::info!("--------------");
-
 
 }
