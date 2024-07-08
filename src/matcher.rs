@@ -140,15 +140,11 @@ impl OrderMatcher {
         for buy in buy_orders {
             if buy.quantity > 0.0 {
                 self.buy_orders.insert(buy.id, buy);
-            } else {
-                self.buy_orders.remove(&buy.id);
             }
         }
         for sell in sell_orders {
             if sell.quantity > 0.0 {
                 self.sell_orders.insert(sell.id, sell);
-            } else {
-                self.sell_orders.remove(&sell.id);
             }
         }
 
