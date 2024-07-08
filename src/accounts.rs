@@ -52,8 +52,8 @@ pub struct AccountSystem {
     pub account_last_id: u64,
     pub account_currencies_last_id: u64,
     pub account_currency_histories_last_id: u64,
-    pub account_stocks_last_id: u64,
-    pub account_stock_histories_last_id: u64,
+    pub account_crypto_currencies_last_id: u64,
+    pub account_crypto_currency_histories_last_id: u64,
     pub storage_system: Arc<StorageSystem>,
     pub asset_system: Arc<AssetSystem>,
 }
@@ -82,18 +82,18 @@ impl AccountSystem {
                 account_currency_histories_last_id = account_currency_history.id;
             }
         }
-        let mut account_stocks_last_id = 0;
-        match storage_system.get_last_account_stock() {
+        let mut account_crypto_currencies_last_id = 0;
+        match storage_system.get_last_account_crypto_currency() {
             None => {}
-            Some(account_stock) => {
-                account_stocks_last_id = account_stock.id;
+            Some(account_crypto_currency) => {
+                account_crypto_currencies_last_id = account_crypto_currency.id;
             }
         }
-        let mut account_stock_histories_last_id = 0;
-        match storage_system.get_last_account_stock_history() {
+        let mut account_crypto_currency_histories_last_id = 0;
+        match storage_system.get_last_account_crypto_currency_history() {
             None => {}
-            Some(account_stock_history) => {
-                account_stock_histories_last_id = account_stock_history.id;
+            Some(account_crypto_currency_history) => {
+                account_crypto_currency_histories_last_id = account_crypto_currency_history.id;
             }
         }
 
@@ -101,8 +101,8 @@ impl AccountSystem {
             account_last_id,
             account_currencies_last_id,
             account_currency_histories_last_id,
-            account_stocks_last_id,
-            account_stock_histories_last_id,
+            account_crypto_currencies_last_id,
+            account_crypto_currency_histories_last_id,
             storage_system,
             asset_system,
         }
@@ -162,15 +162,15 @@ impl AccountSystem {
     }
 
     pub fn create_account_stock(&mut self, account_id: u64, stock_id: u64) -> u64 {
-        self.account_stocks_last_id += 1;
+        self.account_crypto_currencies_last_id += 1;
         let account_stock = AccountCryptoCurrency {
-            id: self.account_stocks_last_id,
+            id: self.account_crypto_currencies_last_id,
             account_id,
             crypto_currency_id: stock_id,
             quantity: 0,
         };
         self.storage_system.add_account_stock(&account_stock);
-        self.account_stocks_last_id
+        self.account_crypto_currencies_last_id
     }
     pub fn add_stock_to_account(&mut self, account_id: u64, stock_id: u64, quantity: i64) {
         let account_stock_opt = self.storage_system.get_account_stock(account_id, stock_id);
@@ -190,9 +190,9 @@ impl AccountSystem {
     }
 
     pub fn add_account_stock_history(&mut self, account_id: u64, stock_id: u64, quantity: i64) {
-        self.account_stock_histories_last_id += 1;
+        self.account_crypto_currency_histories_last_id += 1;
         let account_stock_history = AccountCryptoCurrencyHistory {
-            id: self.account_stock_histories_last_id,
+            id: self.account_crypto_currency_histories_last_id,
             account_id,
             crypto_currency_id: stock_id,
             quantity,

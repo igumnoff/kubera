@@ -13,7 +13,7 @@ pub struct Order {
     pub trade_type: TradeType,
     pub price_type: PriceType,
     pub execution_type: ExecutionType,
-    pub stock_id: u64,
+    pub crypto_currency_id: u64,
     pub currency_id: u64,
     pub quantity: u64,
     pub timestamp: SystemTime,
@@ -117,7 +117,7 @@ impl OrderSystem {
             };
             self.storage_system.add_order_history(&order_history);
             accounts_system.add_currency_to_account(buy_order.account_id, buy_order.currency_id, -(order_match.quantity as f64 * order_match.price));
-            accounts_system.add_stock_to_account(buy_order.account_id, buy_order.stock_id, order_match.quantity as i64);
+            accounts_system.add_stock_to_account(buy_order.account_id, buy_order.crypto_currency_id, order_match.quantity as i64);
         }
 
         let mut sell_order: Order = self.storage_system.get_order(order_match.sell_order_id).unwrap();
@@ -139,7 +139,7 @@ impl OrderSystem {
         };
         self.storage_system.add_order_history(&order_history);
         accounts_system.add_currency_to_account(sell_order.account_id, sell_order.currency_id, order_match.quantity as f64 * order_match.price);
-        accounts_system.add_stock_to_account(sell_order.account_id, sell_order.stock_id, -(order_match.quantity as i64));
+        accounts_system.add_stock_to_account(sell_order.account_id, sell_order.crypto_currency_id, -(order_match.quantity as i64));
 
     }
 

@@ -9,7 +9,7 @@ use crate::orders::{Order, PriceType};
 
 #[derive(Debug)]
 pub struct OrderMatcher {
-    pub stock_id: u64,
+    pub crypto_currency_id: u64,
     pub currency_id: u64,
     pub orders: Vec<Order>,
     pub orders_hash_map: HashMap<u64,u64>, // order.id -> index in orders
@@ -25,9 +25,9 @@ pub struct OrderMatch {
 }
 
 impl OrderMatcher {
-    pub fn new(stock_id: u64, currency_id: u64) -> OrderMatcher {
+    pub fn new(crypto_currency_id: u64, currency_id: u64) -> OrderMatcher {
         OrderMatcher {
-                stock_id,
+            crypto_currency_id,
                 currency_id,
                 orders: vec![],
                 orders_hash_map: HashMap::new(),
@@ -36,7 +36,7 @@ impl OrderMatcher {
     }
 
     pub fn add_order(&mut self, order: Order) {
-        assert!(order.stock_id == self.stock_id);
+        assert!(order.crypto_currency_id == self.crypto_currency_id);
         assert!(order.currency_id == self.currency_id);
         self.orders_hash_map.insert(order.id, self.orders.len() as u64);
         self.orders.push(order);
@@ -55,7 +55,7 @@ impl OrderMatcher {
                 while j < self.orders.len() {
                     let order2 = &self.orders[j];
                     if order2.trade_type == crate::orders::TradeType::Sell {
-                        if order.stock_id == order2.stock_id && order.currency_id == order2.currency_id {
+                        if order.crypto_currency_id == order2.crypto_currency_id && order.currency_id == order2.currency_id {
                             if order.price_type == crate::orders::PriceType::Market {
                                 match order2.price_type {
                                     PriceType::Market => {}
@@ -69,7 +69,7 @@ impl OrderMatcher {
                                             timestamp: self.timestamp,
                                         };
                                         order_matches.push(order_match);
-                                        // TODO: check if the account has enough currency and stock
+                                        // TODO: check if the account has enough currency and crypto currency
                                         if order.quantity == quantity {
                                             order_for_deletion.push(order.id);
                                         } else {
@@ -112,7 +112,7 @@ pub struct MatcherSystem {
 }
 
 impl MatcherSystem {
-    pub fn start(stock_id: u64, currency_id: u64, core_id: CoreId) -> MatcherSystem {
+    pub fn start(crypto_currency_id: u64, currency_id: u64, core_id: CoreId) -> MatcherSystem {
         let order_queue:Arc<ArrayQueue<Order>> = Arc::new(ArrayQueue::new(100));
         let order_match_queue:Arc<ArrayQueue<OrderMatch>> = Arc::new(ArrayQueue::new(100));
         let order_queue_clone = order_queue.clone();
@@ -120,7 +120,7 @@ impl MatcherSystem {
         let _match_system_thread_handle = std::thread::spawn(move || {
             let ok = core_affinity::set_for_current(core_id);
             if ok {
-                let mut matcher_system = OrderMatcher::new(stock_id, currency_id);
+                let mut matcher_system = OrderMatcher::new(crypto_currency_id, currency_id);
                 loop {
                     while let Some(order) = order_queue_clone.pop() {
                         matcher_system.add_order(order);

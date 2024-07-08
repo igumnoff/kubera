@@ -270,7 +270,7 @@ impl StorageSystem {
         }
     }
 
-    pub fn get_last_account_stock(&self) -> Option<AccountCryptoCurrency> {
+    pub fn get_last_account_crypto_currency(&self) -> Option<AccountCryptoCurrency> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(ACCOUNT_STOCKS_TABLE);
         match table_opt {
@@ -291,7 +291,7 @@ impl StorageSystem {
         }
     }
 
-    pub fn get_last_account_stock_history(&self) -> Option<AccountCryptoCurrencyHistory> {
+    pub fn get_last_account_crypto_currency_history(&self) -> Option<AccountCryptoCurrencyHistory> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(ACCOUNT_STOCK_HISTORIES_TABLE);
         match table_opt {
