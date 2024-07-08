@@ -598,32 +598,32 @@ impl StorageSystem {
     }
 
 
-    pub fn load_account_stock_histories(&self) -> Vec<AccountCryptoCurrencyHistory> {
+    pub fn load_account_crypto_currency_histories(&self) -> Vec<AccountCryptoCurrencyHistory> {
         let read_txn = self.accounts_db.begin_read().unwrap();
         let table_opt = read_txn.open_table(ACCOUNT_CRYPTO_CURRENCY_HISTORIES_TABLE);
         match table_opt {
             Ok(table) => {
                 let iter: Range<u64, Bincode<AccountCryptoCurrencyHistory>> = table.iter().unwrap();
-                let mut account_stock_histories = vec![];
+                let mut account_crypto_currency_histories = vec![];
                 for acc in iter {
-                    account_stock_histories.push(acc.unwrap().1.value());
+                    account_crypto_currency_histories.push(acc.unwrap().1.value());
                 }
-                account_stock_histories
+                account_crypto_currency_histories
             }
             Err(_) => {
                 vec![]
             }
         }
     }
-    pub fn get_stock_history_by_account_id_stock_id(&self, account_id: u64, stock_id: u64) -> Vec<AccountCryptoCurrencyHistory> {
-        let account_stock_histories:Vec<AccountCryptoCurrencyHistory> = self.load_account_stock_histories();
-        let mut account_stock_histories_by_account_id = vec![];
-        for acc in account_stock_histories {
+    pub fn get_crypto_currency_history_by_account_id_crypto_currency_id(&self, account_id: u64, stock_id: u64) -> Vec<AccountCryptoCurrencyHistory> {
+        let account_crypto_currency_histories:Vec<AccountCryptoCurrencyHistory> = self.load_account_crypto_currency_histories();
+        let mut account_crypto_currency_histories_by_account_id = vec![];
+        for acc in account_crypto_currency_histories {
             if acc.account_id == account_id && acc.crypto_currency_id == stock_id {
-                account_stock_histories_by_account_id.push(acc);
+                account_crypto_currency_histories_by_account_id.push(acc);
             }
         }
-        account_stock_histories_by_account_id
+        account_crypto_currency_histories_by_account_id
     }
 
 }

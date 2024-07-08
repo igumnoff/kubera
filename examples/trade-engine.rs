@@ -96,10 +96,10 @@ fn print_accounts(storage_system: Arc<StorageSystem>) {
                 "CryptoCurrencyId: {} {} Amount: {}", account_stock.id, storage_system.get_crypto_currency(account_stock.crypto_currency_id).unwrap().symbol, account_stock.quantity
             };
 
-            for account_stock_history in storage_system.get_stock_history_by_account_id_stock_id(account.id, account_stock.crypto_currency_id) {
-                let datetime: DateTime<Local> = account_stock_history.timestamp.into();
+            for account_crypto_currency_history in storage_system.get_crypto_currency_history_by_account_id_crypto_currency_id(account.id, account_stock.crypto_currency_id) {
+                let datetime: DateTime<Local> = account_crypto_currency_history.timestamp.into();
                 tracing::info! {
-                    "CryptoCurrencyId: {} Quantity: {} Timestamp: {}", account_stock_history.id,  account_stock_history.quantity, datetime.format("%Y-%m-%d %H:%M:%S").to_string()
+                    "CryptoCurrencyId: {} Quantity: {} Timestamp: {}", account_crypto_currency_history.id,  account_crypto_currency_history.quantity, datetime.format("%Y-%m-%d %H:%M:%S").to_string()
                 };
             }
         }
