@@ -47,7 +47,6 @@ impl OrderMatcher {
 
         let mut matches = Vec::new();
 
-        // Use a sorted vector to store orders by price: highest price first for buys, lowest first for sells
         let mut buy_orders: Vec<_> = self.buy_orders.drain().map(|(_, o)| o).collect();
         let mut sell_orders: Vec<_> = self.sell_orders.drain().map(|(_, o)| o).collect();
 
