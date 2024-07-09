@@ -139,7 +139,8 @@ impl MatcherSystem {
                     for order_match in order_matches {
                         let _ = order_match_queue_clone.push(order_match);
                     }
-                    std::thread::sleep(std::time::Duration::from_secs(1));
+                    // TODO remove for production to avoid busy loop
+                    std::thread::sleep(std::time::Duration::from_secs(1)); // for testing
                 }
             } else {
                 panic!("Failed to set core affinity");
